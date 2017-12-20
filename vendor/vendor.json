@@ -462,6 +462,168 @@
 			"revisionTime": "2017-11-27T14:43:48Z"
 		},
 		{
+			"checksumSHA1": "UwhLtKi/lHjArxgsqRe6iqSEu3I=",
+			"path": "github.com/onsi/ginkgo",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "0q9OJX4TFhjUaEkVopLyUpvvSQw=",
+			"path": "github.com/onsi/ginkgo/config",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "T1cZh3UWr4Hnx6fQYp+7KDNvxG4=",
+			"path": "github.com/onsi/ginkgo/internal/codelocation",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "qvz6/+otRkWa1OHaPMKap9D5Ge4=",
+			"path": "github.com/onsi/ginkgo/internal/containernode",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "882oWW4FC4Nrd8mrMptsDJSTDds=",
+			"path": "github.com/onsi/ginkgo/internal/failer",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "x2XsPsAvu0o9GFkGNDex2yMUkxs=",
+			"path": "github.com/onsi/ginkgo/internal/leafnodes",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "YYYKM1ETStuYBX9jBNV+t9gku/I=",
+			"path": "github.com/onsi/ginkgo/internal/remote",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "TXRELVQyDglFbTEBSgWzr2kePq0=",
+			"path": "github.com/onsi/ginkgo/internal/spec",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "4bevAplfVxvxbgQOLIc2elkiREo=",
+			"path": "github.com/onsi/ginkgo/internal/specrunner",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "qHyV9V4XDctM1CYOplL703ZIqDg=",
+			"path": "github.com/onsi/ginkgo/internal/suite",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "6sOxGhw1brknfjJd9h7MhpnxHMY=",
+			"path": "github.com/onsi/ginkgo/internal/testingtproxy",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "dpgqwFYT7NWSOG0Ah+r6kgMhrBg=",
+			"path": "github.com/onsi/ginkgo/internal/writer",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "Ns/YVVNxy4JTzrzjxToWV10lwWc=",
+			"path": "github.com/onsi/ginkgo/reporters",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "w5w5vYFE+kazTCON6pbEGDhsx7U=",
+			"path": "github.com/onsi/ginkgo/reporters/stenographer",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "FGWjq6+D/zfVdOx13U3Bn/I25v0=",
+			"path": "github.com/onsi/ginkgo/types",
+			"revision": "5437a97bf824dec14e58d68c56ee36e772670c2e",
+			"revisionTime": "2016-05-09T18:20:50Z"
+		},
+		{
+			"checksumSHA1": "GLT5GJfAoRSaN+hSTpiL0Sx/N80=",
+			"path": "github.com/onsi/gomega",
+			"revision": "f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c",
+			"revisionTime": "2016-11-18T20:51:29Z"
+		},
+		{
+			"checksumSHA1": "5VvGGLon1NsOyryvwNnskWS7rOE=",
+			"path": "github.com/onsi/gomega/format",
+			"revision": "f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c",
+			"revisionTime": "2016-11-18T20:51:29Z"
+		},
+		{
+			"checksumSHA1": "H4RBR9kcEWh2lECAzBaOTSvgUuA=",
+			"path": "github.com/onsi/gomega/internal/assertion",
+			"revision": "f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c",
+			"revisionTime": "2016-11-18T20:51:29Z"
+		},
+		{
+			"checksumSHA1": "N7HhJzMN+STfzI315keM9SxFQAE=",
+			"path": "github.com/onsi/gomega/internal/asyncassertion",
+			"revision": "f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c",
+			"revisionTime": "2016-11-18T20:51:29Z"
+		},
+		{
+			"checksumSHA1": "EsgeBqN2S5wj8aWvGsS162ZK7xI=",
+			"path": "github.com/onsi/gomega/internal/oraclematcher",
+			"revision": "f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c",
+			"revisionTime": "2016-11-18T20:51:29Z"
+		},
+		{
+			"checksumSHA1": "G+KJsEQohAtPAHEbhHxRN0pffcA=",
+			"path": "github.com/onsi/gomega/internal/testingtsupport",
+			"revision": "f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c",
+			"revisionTime": "2016-11-18T20:51:29Z"
+		},
+		{
+			"checksumSHA1": "D9T3kgRrvC73WET7MpBbRcYz2fQ=",
+			"path": "github.com/onsi/gomega/matchers",
+			"revision": "f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c",
+			"revisionTime": "2016-11-18T20:51:29Z"
+		},
+		{
+			"checksumSHA1": "gWJfsDHiZTga1esEChd+MfpftN0=",
+			"path": "github.com/onsi/gomega/matchers/support/goraph/bipartitegraph",
+			"revision": "f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c",
+			"revisionTime": "2016-11-18T20:51:29Z"
+		},
+		{
+			"checksumSHA1": "zjTC6ady0bJUwzTFAKtv63T7Fmg=",
+			"path": "github.com/onsi/gomega/matchers/support/goraph/edge",
+			"revision": "f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c",
+			"revisionTime": "2016-11-18T20:51:29Z"
+		},
+		{
+			"checksumSHA1": "o2+IscLOPKOiovl2g0/igkD1R4Q=",
+			"path": "github.com/onsi/gomega/matchers/support/goraph/node",
+			"revision": "f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c",
+			"revisionTime": "2016-11-18T20:51:29Z"
+		},
+		{
+			"checksumSHA1": "yEF1BYQPwS3neYFKiqNQReqnadY=",
+			"path": "github.com/onsi/gomega/matchers/support/goraph/util",
+			"revision": "f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c",
+			"revisionTime": "2016-11-18T20:51:29Z"
+		},
+		{
+			"checksumSHA1": "zEuQ0PUlbqojtNwvu01Mn3DQCJM=",
+			"path": "github.com/onsi/gomega/types",
+			"revision": "f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c",
+			"revisionTime": "2016-11-18T20:51:29Z"
+		},
+		{
 			"checksumSHA1": "o3LQ8fR1R/mHRBfoab+ds/KF9oc=",
 			"origin": "github.com/hyperledger/fabric/vendor/github.com/op/go-logging",
 			"path": "github.com/op/go-logging",
