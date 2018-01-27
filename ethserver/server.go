@@ -6,42 +6,50 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+
+	"github.com/gogo/protobuf/proto"
+	"github.com/hyperledger/fabric-sdk-go/api/apitxn"
+	"github.com/hyperledger/fabric-sdk-go/pkg/config"
+	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
+	"github.com/hyperledger/fabric/protos/peer"
 )
 
 type EthRPCService struct {
 	EthService
-	Web3Service
-}
-type Web3Service interface {
-	ClientVersion(args *EthRPCArgs, reply *string) error
-}
-type EthService interface {
-	GetCode(*getCodeArgs, *string) error
 }
 
-type ethRPCService struct{}
-type web3Service struct{}
+type EthService interface {
+	GetCode(*GetCodeArgs, *string) error
+}
+
+type ethRPCService struct {
+	sdk *fabsdk.FabricSDK
+}
 
 type EthRPCArgs struct{}
-type getCodeArgs struct{}
+type GetCodeArgs string
 
 type EthServer struct {
 	Server   *rpc.Server
 	listener net.Listener
 }
 
-func NewEthService() EthService {
-	return new(ethRPCService)
+func NewEthService(configFile string) EthService {
+	fmt.Println(configFile)
+	c := config.FromFile(configFile)
+	sdk, err := fabsdk.New(c)
+	if err != nil {
+		log.Panic("error creating sdk: ", err)
+	}
+	return &ethRPCService{
+		sdk: sdk,
+	}
 }
 
-func NewWeb3Service() Web3Service {
-	return new(web3Service)
-}
-
-func NewEthServer(eth EthService, web3 Web3Service) *EthServer {
+func NewEthServer(eth EthService) *EthServer {
 	server := rpc.NewServer()
 
-	ethService := EthRPCService{eth, web3}
+	ethService := EthRPCService{eth}
 	server.Register(ethService)
 
 	return &EthServer{
@@ -72,10 +80,36 @@ func (s *EthServer) Stop() {
 	s.listener.Close()
 }
 
-func (req *web3Service) ClientVersion(args *EthRPCArgs, reply *string) error {
-	*reply = "0.0"
-	return nil
-}
-func (req *ethRPCService) GetCode(args *getCodeArgs, reply *string) error {
+func (req *ethRPCService) GetCode(args *GetCodeArgs, reply *string) error {
+
+	defaultUser := "User1"
+	channelID := "mychannel"
+
+	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
+	if err != nil {
+		log.Panic("error creating client", err)
+	}
+
+	defer chClient.Close()
+
+	queryArgs := [][]byte{[]byte(channelID), []byte(*args)}
+
+	value, err := chClient.Query(apitxn.QueryRequest{
+		ChaincodeID: "lscc",
+		Fcn:         "getdepspec",
+		Args:        queryArgs,
+	})
+	if err != nil {
+		fmt.Printf("Failed to query: %s\n", err)
+	}
+
+	cds := &peer.ChaincodeDeploymentSpec{}
+	err = proto.Unmarshal(value, cds)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal code: %s", err)
+	}
+
+	*reply = string(cds.CodePackage)
+
 	return nil
 }

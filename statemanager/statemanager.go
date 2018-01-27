@@ -8,6 +8,13 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
+type StateWriter interface {
+	GetStorage(address account.Address, key binary.Word256) (binary.Word256, error)
+	UpdateAccount(updatedAccount account.Account) error
+	RemoveAccount(address account.Address) error
+	SetStorage(address account.Address, key, value binary.Word256) error
+}
+
 type stateWriter struct {
 	stub shim.ChaincodeStubInterface
 }

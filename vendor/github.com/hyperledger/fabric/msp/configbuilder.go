@@ -90,15 +90,21 @@ func getPemMaterialFromDir(dir string) ([][]byte, error) {
 	content := make([][]byte, 0)
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not read directory %s", err)
+		return nil, errors.Wrapf(err, "could not read directory %s", dir)
 	}
 
 	for _, f := range files {
+		fullName := filepath.Join(dir, f.Name())
+
+		f, err := os.Stat(fullName)
+		if err != nil {
+			mspLogger.Warningf("Failed to stat %s: %s", fullName, err)
+			continue
+		}
 		if f.IsDir() {
 			continue
 		}
 
-		fullName := filepath.Join(dir, string(filepath.Separator), f.Name())
 		mspLogger.Debugf("Inspecting file %s", fullName)
 
 		item, err := readPemFile(fullName)
@@ -144,6 +150,20 @@ func SetupBCCSPKeystoreConfig(bccspConfig *factory.FactoryOpts, keystoreDir stri
 	}
 
 	return bccspConfig
+}
+
+// GetLocalMspConfigWithType returns a local MSP
+// configuration for the MSP in the specified
+// directory, with the specified ID and type
+func GetLocalMspConfigWithType(dir string, bccspConfig *factory.FactoryOpts, ID, mspType string) (*msp.MSPConfig, error) {
+	switch mspType {
+	case ProviderTypeToString(FABRIC):
+		return GetLocalMspConfig(dir, bccspConfig, ID)
+	case ProviderTypeToString(IDEMIX):
+		return GetIdemixMspConfig(dir, ID)
+	default:
+		return nil, errors.Errorf("unknown MSP type '%s'", mspType)
+	}
 }
 
 func GetLocalMspConfig(dir string, bccspConfig *factory.FactoryOpts, ID string) (*msp.MSPConfig, error) {

@@ -2,9 +2,6 @@ package ethserver_test
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strings"
 
 	"github.com/hyperledger/fabric-chaincode-evm/ethserver"
 	"github.com/onsi/ginkgo/config"
@@ -20,7 +17,7 @@ var _ = Describe("EthServer", func() {
 		port       int
 	)
 	BeforeEach(func() {
-		server = ethserver.NewEthServer(ethserver.NewEthService(), ethserver.NewWeb3Service())
+		server = ethserver.NewEthServer(ethserver.NewEthService())
 		port = 5000 + config.GinkgoConfig.ParallelNode
 		go func() {
 			server.Start(port)
@@ -32,29 +29,29 @@ var _ = Describe("EthServer", func() {
 		server.Stop()
 	})
 
-	Describe("WEB3", func() {
-		Context("client version", func() {
-			It("returns the client verstion", func() {
-				jsonRequest := `{
-				"jsonrpc" : "2.0",
-				"method" : "web3_clientVersion",
-				"params" : [],
-				"id" : 67
-			}`
+	// Describe("WEB3", func() {
+	// 	Context("client version", func() {
+	// 		It("returns the client verstion", func() {
+	// 			jsonRequest := `{
+	// 			"jsonrpc" : "2.0",
+	// 			"method" : "web3_clientVersion",
+	// 			"params" : [],
+	// 			"id" : 67
+	// 		}`
 
-				res, err := http.Post(serverAddr, "", strings.NewReader(jsonRequest))
-				Expect(err).ToNot(HaveOccurred())
-				defer res.Body.Close()
+	// 			res, err := http.Post(serverAddr, "", strings.NewReader(jsonRequest))
+	// 			Expect(err).ToNot(HaveOccurred())
+	// 			defer res.Body.Close()
 
-				body, err := ioutil.ReadAll(res.Body)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(body).To(ContainSubstring("0.0"))
+	// 			body, err := ioutil.ReadAll(res.Body)
+	// 			Expect(err).ToNot(HaveOccurred())
+	// 			Expect(body).To(ContainSubstring("0.0"))
 
-				Expect(err).ToNot(HaveOccurred())
-				Expect(res.StatusCode).To(Equal(http.StatusOK))
-			})
-		})
-	})
+	// 			Expect(err).ToNot(HaveOccurred())
+	// 			Expect(res.StatusCode).To(Equal(http.StatusOK))
+	// 		})
+	// 	})
+	// })
 
 	XDescribe("ETH", func() {
 		Context("Get Code", func() {

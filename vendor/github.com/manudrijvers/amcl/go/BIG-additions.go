@@ -69,3 +69,7 @@ func (r *BIG) Powmod(e *BIG,m *BIG) *BIG {
 	return r.powmod(e, m)
 }
 
+func (r *BIG) Shr(k uint) {
+	r.shr(k)
+}
+

@@ -49,9 +49,11 @@ It has these top-level messages:
 	Unregister
 	FilteredBlock
 	FilteredTransaction
-	FilteredAction
+	FilteredTransactionActions
+	FilteredChaincodeAction
 	SignedEvent
 	Event
+	DeliverResponse
 	PeerID
 	PeerEndpoint
 	SignedProposal
@@ -72,6 +74,7 @@ It has these top-level messages:
 	ChaincodeValidation
 	VSCCArgs
 	ChaincodeEndorsement
+	ConfigTree
 	SignedChaincodeDeploymentSpec
 	SignedTransaction
 	ProcessedTransaction

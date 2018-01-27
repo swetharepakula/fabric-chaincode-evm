@@ -11,10 +11,12 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
+	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/bccsp"
 	m "github.com/hyperledger/fabric/protos/msp"
-	"github.com/pkg/errors"
+	errors "github.com/pkg/errors"
 )
 
 func (msp *bccspmsp) getCertifiersIdentifier(certRaw []byte) ([]byte, error) {
@@ -157,17 +159,6 @@ func (msp *bccspmsp) setupCAs(conf *m.FabricMSPConfig) error {
 		msp.opts.Intermediates.AddCert(id.(*identity).cert)
 	}
 
-	// make and fill the set of admin certs (if present)
-	msp.admins = make([]Identity, len(conf.Admins))
-	for i, admCert := range conf.Admins {
-		id, _, err := msp.getIdentityFromConf(admCert)
-		if err != nil {
-			return err
-		}
-
-		msp.admins[i] = id
-	}
-
 	return nil
 }
 
@@ -282,6 +273,16 @@ func (msp *bccspmsp) setupSigningIdentity(conf *m.FabricMSPConfig) error {
 		sid, err := msp.getSigningIdentityFromConf(conf.SigningIdentity)
 		if err != nil {
 			return err
+		}
+
+		expirationTime := sid.ExpiresAt()
+		now := time.Now()
+		if expirationTime.After(now) {
+			mspLogger.Debug("Signing identity expires at", expirationTime)
+		} else if expirationTime.IsZero() {
+			mspLogger.Debug("Signing identity has no known expiration time")
+		} else {
+			return errors.Errorf("signing identity expired %v ago", now.Sub(expirationTime))
 		}
 
 		msp.signer = sid
@@ -454,9 +455,34 @@ func (msp *bccspmsp) setupV11(conf *m.FabricMSPConfig) error {
 		return err
 	}
 
-	err = msp.postSetupV1(conf)
+	err = msp.postSetupV11(conf)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (msp *bccspmsp) postSetupV11(conf *m.FabricMSPConfig) error {
+	// Check for OU enforcement
+	if !msp.ouEnforcement {
+		// No enforcement required. Call post setup as per V1
+		return msp.postSetupV1(conf)
+	}
+
+	// Check that admins are clients
+	principalBytes, err := proto.Marshal(&m.MSPRole{Role: m.MSPRole_CLIENT, MspIdentifier: msp.name})
+	if err != nil {
+		return errors.Wrapf(err, "failed creating MSPRole_CLIENT")
+	}
+	principal := &m.MSPPrincipal{
+		PrincipalClassification: m.MSPPrincipal_ROLE,
+		Principal:               principalBytes}
+	for i, admin := range msp.admins {
+		err = admin.SatisfiesPrincipal(principal)
+		if err != nil {
+			return errors.WithMessage(err, fmt.Sprintf("admin %d is invalid", i))
+		}
 	}
 
 	return nil

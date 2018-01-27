@@ -63,3 +63,10 @@ func (F *FP) Pow(e *BIG) *FP {
 	return F.pow(e)
 }
 
+func (F *FP) Sqrt() *FP {
+	return F.sqrt()
+}
+
+func (F *FP) Redc() *BIG {
+	return F.redc()
+}

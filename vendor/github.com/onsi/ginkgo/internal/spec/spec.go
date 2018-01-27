@@ -17,9 +17,11 @@ type Spec struct {
 
 	containers []*containernode.ContainerNode
 
-	state   types.SpecState
-	runTime time.Duration
-	failure types.SpecFailure
+	state            types.SpecState
+	runTime          time.Duration
+	startTime        time.Time
+	failure          types.SpecFailure
+	previousFailures bool
 }
 
 func New(subject leafnodes.SubjectNode, containers []*containernode.ContainerNode, announceProgress bool) *Spec {
@@ -58,6 +60,10 @@ func (spec *Spec) Passed() bool {
 	return spec.state == types.SpecStatePassed
 }
 
+func (spec *Spec) Flaked() bool {
+	return spec.state == types.SpecStatePassed && spec.previousFailures
+}
+
 func (spec *Spec) Pending() bool {
 	return spec.state == types.SpecStatePending
 }
@@ -86,13 +92,18 @@ func (spec *Spec) Summary(suiteID string) *types.SpecSummary {
 	componentTexts[len(spec.containers)] = spec.subject.Text()
 	componentCodeLocations[len(spec.containers)] = spec.subject.CodeLocation()
 
+	runTime := spec.runTime
+	if runTime == 0 {
+		runTime = time.Since(spec.startTime)
+	}
+
 	return &types.SpecSummary{
 		IsMeasurement:          spec.IsMeasurement(),
 		NumberOfSamples:        spec.subject.Samples(),
 		ComponentTexts:         componentTexts,
 		ComponentCodeLocations: componentCodeLocations,
 		State:        spec.state,
-		RunTime:      spec.runTime,
+		RunTime:      runTime,
 		Failure:      spec.failure,
 		Measurements: spec.measurementsReport(),
 		SuiteID:      suiteID,
@@ -109,9 +120,13 @@ func (spec *Spec) ConcatenatedString() string {
 }
 
 func (spec *Spec) Run(writer io.Writer) {
-	startTime := time.Now()
+	if spec.state == types.SpecStateFailed {
+		spec.previousFailures = true
+	}
+
+	spec.startTime = time.Now()
 	defer func() {
-		spec.runTime = time.Since(startTime)
+		spec.runTime = time.Since(spec.startTime)
 	}()
 
 	for sample := 0; sample < spec.subject.Samples(); sample++ {
