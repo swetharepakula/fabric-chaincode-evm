@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"regexp"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/hyperledger/fabric-sdk-go/api/apitxn"
@@ -33,6 +34,9 @@ type EthServer struct {
 	Server   *rpc.Server
 	listener net.Listener
 }
+
+var defaultUser = "User1"
+var channelID = "mychannel"
 
 func NewEthService(configFile string) EthService {
 	fmt.Println(configFile)
@@ -82,9 +86,6 @@ func (s *EthServer) Stop() {
 
 func (req *ethRPCService) GetCode(args *GetCodeArgs, reply *string) error {
 
-	defaultUser := "User1"
-	channelID := "mychannel"
-
 	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
 	if err != nil {
 		log.Panic("error creating client", err)
@@ -94,11 +95,7 @@ func (req *ethRPCService) GetCode(args *GetCodeArgs, reply *string) error {
 
 	queryArgs := [][]byte{[]byte(channelID), []byte(*args)}
 
-	value, err := chClient.Query(apitxn.QueryRequest{
-		ChaincodeID: "lscc",
-		Fcn:         "getdepspec",
-		Args:        queryArgs,
-	})
+	value, err := Query(chClient, "lscc", "getdepspec", queryArgs)
 	if err != nil {
 		fmt.Printf("Failed to query: %s\n", err)
 	}
@@ -112,4 +109,45 @@ func (req *ethRPCService) GetCode(args *GetCodeArgs, reply *string) error {
 	*reply = string(cds.CodePackage)
 
 	return nil
+}
+
+func (req *ethRPCService) GetBlock(args *GetCodeArgs, reply *string) error {
+
+	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
+	if err != nil {
+		log.Panic("error creating client", err)
+	}
+
+	defer chClient.Close()
+
+	queryArgs := [][]byte{[]byte(channelID), []byte(*args)}
+
+	isHash, err := regexp.MatchString("[a-f]", string(*args))
+
+	var value []byte
+
+	if isHash {
+		value, err = Query(chClient, "qscc", "GetBlockByHash", queryArgs)
+		if err != nil {
+			log.Fatalf("Failed to query qscc, function: GetBlockByHash", err)
+		}
+	} else {
+		value, err = Query(chClient, "qscc", "GetBlockByNumber", queryArgs)
+		log.Fatalf("Failed to query qscc, function: GetBlockByNumber", err)
+
+	}
+
+	*reply = string(value)
+
+	return nil
+}
+
+func Query(chClient apitxn.ChannelClient, chaincodeID string, function string, queryArgs [][]byte) ([]byte, error) {
+
+	return chClient.Query(apitxn.QueryRequest{
+		ChaincodeID: chaincodeID,
+		Fcn:         function,
+		Args:        queryArgs,
+	})
+
 }
