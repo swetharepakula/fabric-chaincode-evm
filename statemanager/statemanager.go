@@ -9,6 +9,7 @@ import (
 )
 
 type StateWriter interface {
+	GetAccount(address account.Address) (account.Account, error)
 	GetStorage(address account.Address, key binary.Word256) (binary.Word256, error)
 	UpdateAccount(updatedAccount account.Account) error
 	RemoveAccount(address account.Address) error

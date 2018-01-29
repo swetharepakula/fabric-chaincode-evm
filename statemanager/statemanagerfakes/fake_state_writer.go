@@ -10,6 +10,19 @@ import (
 )
 
 type FakeStateWriter struct {
+	GetAccountStub        func(address account.Address) (account.Account, error)
+	getAccountMutex       sync.RWMutex
+	getAccountArgsForCall []struct {
+		address account.Address
+	}
+	getAccountReturns struct {
+		result1 account.Account
+		result2 error
+	}
+	getAccountReturnsOnCall map[int]struct {
+		result1 account.Account
+		result2 error
+	}
 	GetStorageStub        func(address account.Address, key binary.Word256) (binary.Word256, error)
 	getStorageMutex       sync.RWMutex
 	getStorageArgsForCall []struct {
@@ -61,6 +74,57 @@ type FakeStateWriter struct {
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakeStateWriter) GetAccount(address account.Address) (account.Account, error) {
+	fake.getAccountMutex.Lock()
+	ret, specificReturn := fake.getAccountReturnsOnCall[len(fake.getAccountArgsForCall)]
+	fake.getAccountArgsForCall = append(fake.getAccountArgsForCall, struct {
+		address account.Address
+	}{address})
+	fake.recordInvocation("GetAccount", []interface{}{address})
+	fake.getAccountMutex.Unlock()
+	if fake.GetAccountStub != nil {
+		return fake.GetAccountStub(address)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fake.getAccountReturns.result1, fake.getAccountReturns.result2
+}
+
+func (fake *FakeStateWriter) GetAccountCallCount() int {
+	fake.getAccountMutex.RLock()
+	defer fake.getAccountMutex.RUnlock()
+	return len(fake.getAccountArgsForCall)
+}
+
+func (fake *FakeStateWriter) GetAccountArgsForCall(i int) account.Address {
+	fake.getAccountMutex.RLock()
+	defer fake.getAccountMutex.RUnlock()
+	return fake.getAccountArgsForCall[i].address
+}
+
+func (fake *FakeStateWriter) GetAccountReturns(result1 account.Account, result2 error) {
+	fake.GetAccountStub = nil
+	fake.getAccountReturns = struct {
+		result1 account.Account
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeStateWriter) GetAccountReturnsOnCall(i int, result1 account.Account, result2 error) {
+	fake.GetAccountStub = nil
+	if fake.getAccountReturnsOnCall == nil {
+		fake.getAccountReturnsOnCall = make(map[int]struct {
+			result1 account.Account
+			result2 error
+		})
+	}
+	fake.getAccountReturnsOnCall[i] = struct {
+		result1 account.Account
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeStateWriter) GetStorage(address account.Address, key binary.Word256) (binary.Word256, error) {
@@ -264,6 +328,8 @@ func (fake *FakeStateWriter) SetStorageReturnsOnCall(i int, result1 error) {
 func (fake *FakeStateWriter) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.getAccountMutex.RLock()
+	defer fake.getAccountMutex.RUnlock()
 	fake.getStorageMutex.RLock()
 	defer fake.getStorageMutex.RUnlock()
 	fake.updateAccountMutex.RLock()
