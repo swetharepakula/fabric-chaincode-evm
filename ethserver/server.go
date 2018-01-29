@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
-	"regexp"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/hyperledger/fabric-sdk-go/api/apitxn"
@@ -45,6 +44,7 @@ func NewEthService(configFile string) EthService {
 	if err != nil {
 		log.Panic("error creating sdk: ", err)
 	}
+
 	return &ethRPCService{
 		sdk: sdk,
 	}
@@ -111,7 +111,7 @@ func (req *ethRPCService) GetCode(args *GetCodeArgs, reply *string) error {
 	return nil
 }
 
-func (req *ethRPCService) GetBlock(args *GetCodeArgs, reply *string) error {
+func (req *ethRPCService) GetBlockByHash(args *GetCodeArgs, reply *string) error {
 
 	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
 	if err != nil {
@@ -120,22 +120,33 @@ func (req *ethRPCService) GetBlock(args *GetCodeArgs, reply *string) error {
 
 	defer chClient.Close()
 
-	queryArgs := [][]byte{[]byte(channelID), []byte(*args)}
+	var value []byte
 
-	isHash, err := regexp.MatchString("[a-f]", string(*args))
+	queryArgs := [][]byte{[]byte(channelID), []byte(*args)}
+	value, err = Query(chClient, "qscc", "GetBlockByHash", queryArgs)
+	if err != nil {
+		log.Fatalf("Failed to query qscc, function: GetBlockByHash", err)
+	}
+
+	*reply = string(value)
+
+	return nil
+}
+
+func (req *ethRPCService) GetBlockByNumber(args *GetCodeArgs, reply *string) error {
+
+	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
+	if err != nil {
+		log.Panic("error creating client", err)
+	}
+
+	defer chClient.Close()
 
 	var value []byte
 
-	if isHash {
-		value, err = Query(chClient, "qscc", "GetBlockByHash", queryArgs)
-		if err != nil {
-			log.Fatalf("Failed to query qscc, function: GetBlockByHash", err)
-		}
-	} else {
-		value, err = Query(chClient, "qscc", "GetBlockByNumber", queryArgs)
-		log.Fatalf("Failed to query qscc, function: GetBlockByNumber", err)
-
-	}
+	queryArgs := [][]byte{[]byte(channelID), []byte(*args)}
+	value, err = Query(chClient, "qscc", "GetBlockByNumber", queryArgs)
+	log.Fatalf("Failed to query qscc, function: GetBlockByNumber", err)
 
 	*reply = string(value)
 
