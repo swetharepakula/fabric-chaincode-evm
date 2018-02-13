@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gorilla/rpc"
-	"github.com/gorilla/rpc/json"
+	"github.com/gorilla/rpc/v2"
+	"github.com/gorilla/rpc/v2/json2"
 )
 
 type rpcCodec struct {
-	codec *json.Codec
+	codec *json2.Codec
 }
 
 type codecRequest struct {
@@ -18,7 +18,7 @@ type codecRequest struct {
 }
 
 func NewRPCCodec() rpc.Codec {
-	codec := json.NewCodec()
+	codec := json2.NewCodec()
 	return &rpcCodec{codec: codec}
 }
 

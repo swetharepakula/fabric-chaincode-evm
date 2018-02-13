@@ -7,10 +7,11 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/rpc"
+	"github.com/gorilla/rpc/v2"
 	"github.com/hyperledger/fabric-sdk-go/api/apitxn"
 	"github.com/hyperledger/fabric-sdk-go/pkg/config"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
@@ -100,7 +101,7 @@ func (req *ethRPCService) GetCode(r *http.Request, args *DataParam, reply *strin
 
 	defer chClient.Close()
 
-	queryArgs := [][]byte{[]byte(*args)}
+	queryArgs := [][]byte{[]byte(Strip0xFromHex(string(*args)))}
 
 	value, err := Query(chClient, "evmscc", "getCode", queryArgs)
 	if err != nil {
@@ -195,8 +196,6 @@ func (req *ethRPCService) GetTransactionReceipt(r *http.Request, param *DataPara
 		return err
 	}
 
-	fmt.Printf("PAYLOAD HEADERS: %+v\n\n", payload.GetHeader())
-
 	// have to figure out when to pass in the contract address or not
 	*reply = TxReceipt{
 		TransactionHash: string(*param),
@@ -216,4 +215,12 @@ func Query(chClient apitxn.ChannelClient, chaincodeID string, function string, q
 		Fcn:         function,
 		Args:        queryArgs,
 	})
+}
+
+func Strip0xFromHex(addr string) string {
+	stripped := strings.Split(addr, "0x")
+	// if len(stripped) != 1 {
+	// 	panic("Had more then 1 0x in address")
+	// }
+	return stripped[len(stripped)-1]
 }
