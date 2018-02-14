@@ -599,6 +599,30 @@
 			"revisionTime": "2018-01-18T11:18:09Z"
 		},
 		{
+			"checksumSHA1": "g/V4qrXjUGG9B+e3hB+4NAYJ5Gs=",
+			"path": "github.com/gorilla/context",
+			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
+			"revisionTime": "2016-08-17T18:46:32Z"
+		},
+		{
+			"checksumSHA1": "bVayBU8lTVHNDai7umD17bwyws0=",
+			"path": "github.com/gorilla/mux",
+			"revision": "5ab525f4fb1678e197ae59401e9050fa0b6cb5fd",
+			"revisionTime": "2017-12-08T16:08:15Z"
+		},
+		{
+			"checksumSHA1": "ZVzABul4nD/fzyYnbe+5bsJ4nBg=",
+			"path": "github.com/gorilla/rpc/v2",
+			"revision": "22c016f3df3febe0c1f6727598b6389507e03a18",
+			"revisionTime": "2016-09-23T22:06:01Z"
+		},
+		{
+			"checksumSHA1": "7yTdbVbA4b9KQbkkbdIU7OL2ivM=",
+			"path": "github.com/gorilla/rpc/v2/json2",
+			"revision": "22c016f3df3febe0c1f6727598b6389507e03a18",
+			"revisionTime": "2016-09-23T22:06:01Z"
+		},
+		{
 			"checksumSHA1": "YAq1rqZIp+M74Q+jMBQkkMKm3VM=",
 			"path": "github.com/hashicorp/go-cleanhttp",
 			"revision": "d5fe4b57a186c716b0e00b8c301cbd9b4182694d",

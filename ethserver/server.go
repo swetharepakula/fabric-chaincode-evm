@@ -1,6 +1,7 @@
 package ethserver
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -59,6 +60,7 @@ type EthServer struct {
 
 var defaultUser = "User1"
 var channelID = "mychannel"
+var zeroAddress = make([]byte, 20)
 
 func NewEthService(configFile string) EthService {
 	fmt.Println(configFile)
@@ -158,7 +160,6 @@ func (req *ethRPCService) SendTransaction(r *http.Request, params *Params, reply
 	return nil
 }
 
-//TODO: Return only the transaction result in the Contract Address spot.
 func (req *ethRPCService) GetTransactionReceipt(r *http.Request, param *DataParam, reply *TxReceipt) error {
 
 	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
@@ -196,16 +197,45 @@ func (req *ethRPCService) GetTransactionReceipt(r *http.Request, param *DataPara
 		return err
 	}
 
-	// have to figure out when to pass in the contract address or not
-	*reply = TxReceipt{
+	txActions := &peer.Transaction{}
+	err = proto.Unmarshal(payload.GetData(), txActions)
+
+	if err != nil {
+		return err
+	}
+
+	actions := txActions.GetActions()
+
+	ccPropPayload, respPayload, err := GetPayloads(actions[0])
+	if err != nil {
+		return err
+	}
+
+	invokeSpec := &peer.ChaincodeInvocationSpec{}
+	err = proto.Unmarshal(ccPropPayload.Input, invokeSpec)
+	if err != nil {
+		return err
+	}
+
+	receipt := TxReceipt{
 		TransactionHash: string(*param),
 		BlockHash:       hex.EncodeToString(blkHeader.Hash()),
 		BlockNumber:     strconv.FormatUint(blkHeader.GetNumber(), 10),
-		ContractAddress: string(payload.GetData()),
 	}
 
-	return nil
+	args = invokeSpec.GetChaincodeSpec().GetInput().Args
+	// First arg is the callee address. If it is zero address, tx was a contract creation
+	callee, err := hex.DecodeString(string(args[0]))
+	if err != nil {
+		return err
+	}
 
+	if bytes.Equal(callee, zeroAddress) {
+		receipt.ContractAddress = string(respPayload.GetResponse().GetPayload())
+	}
+	*reply = receipt
+
+	return nil
 }
 
 func Query(chClient apitxn.ChannelClient, chaincodeID string, function string, queryArgs [][]byte) ([]byte, error) {
@@ -223,4 +253,40 @@ func Strip0xFromHex(addr string) string {
 	// 	panic("Had more then 1 0x in address")
 	// }
 	return stripped[len(stripped)-1]
+}
+
+func GetPayloads(txActions *peer.TransactionAction) (*peer.ChaincodeProposalPayload, *peer.ChaincodeAction, error) {
+	// TODO: pass in the tx type (in what follows we're assuming the type is ENDORSER_TRANSACTION)
+	ccPayload := &peer.ChaincodeActionPayload{}
+	err := proto.Unmarshal(txActions.Payload, ccPayload)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if ccPayload.Action == nil || ccPayload.Action.ProposalResponsePayload == nil {
+		return nil, nil, fmt.Errorf("no payload in ChaincodeActionPayload")
+	}
+
+	ccProposalPayload := &peer.ChaincodeProposalPayload{}
+	err = proto.Unmarshal(ccPayload.ChaincodeProposalPayload, ccProposalPayload)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pRespPayload := &peer.ProposalResponsePayload{}
+	err = proto.Unmarshal(ccPayload.Action.ProposalResponsePayload, pRespPayload)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if pRespPayload.Extension == nil {
+		return nil, nil, fmt.Errorf("response payload is missing extension")
+	}
+
+	respPayload := &peer.ChaincodeAction{}
+	err = proto.Unmarshal(pRespPayload.Extension, respPayload)
+	if err != nil {
+		return ccProposalPayload, nil, err
+	}
+	return ccProposalPayload, respPayload, nil
 }
