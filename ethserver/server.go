@@ -122,9 +122,9 @@ func (req *ethRPCService) Call(r *http.Request, params *Params, reply *string) e
 	}
 	defer chClient.Close()
 
-	args := [][]byte{[]byte(params.Data)}
+	args := [][]byte{[]byte(Strip0xFromHex(params.Data))}
 
-	value, err := Query(chClient, "evmscc", params.To, args)
+	value, err := Query(chClient, "evmscc", Strip0xFromHex(params.To), args)
 	if err != nil {
 		return err
 	}
@@ -142,10 +142,14 @@ func (req *ethRPCService) SendTransaction(r *http.Request, params *Params, reply
 	}
 	defer chClient.Close()
 
+	if params.To == "" {
+		params.To = hex.EncodeToString(zeroAddress)
+	}
+
 	txReq := apitxn.ExecuteTxRequest{
 		ChaincodeID: "evmscc",
-		Fcn:         params.To,
-		Args:        [][]byte{[]byte(params.Data)},
+		Fcn:         Strip0xFromHex(params.To),
+		Args:        [][]byte{[]byte(Strip0xFromHex(params.Data))},
 	}
 
 	//Return only the transaction ID
