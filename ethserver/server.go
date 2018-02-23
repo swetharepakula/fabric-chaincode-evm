@@ -129,13 +129,12 @@ func (req *ethRPCService) Call(r *http.Request, params *Params, reply *string) e
 		return err
 	}
 
-	*reply = string(value)
+	*reply = "0x" + hex.EncodeToString(value)
 
 	return nil
 }
 
 func (req *ethRPCService) SendTransaction(r *http.Request, params *Params, reply *string) error {
-
 	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
 	if err != nil {
 		return err
@@ -165,7 +164,6 @@ func (req *ethRPCService) SendTransaction(r *http.Request, params *Params, reply
 }
 
 func (req *ethRPCService) GetTransactionReceipt(r *http.Request, param *DataParam, reply *TxReceipt) error {
-
 	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
 
 	args := [][]byte{[]byte(channelID), []byte(*param)}
