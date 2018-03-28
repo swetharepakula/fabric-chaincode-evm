@@ -59,7 +59,7 @@ type EthServer struct {
 }
 
 var defaultUser = "User1"
-var channelID = "mychannel"
+var channelID = "channel1"
 var zeroAddress = make([]byte, 20)
 
 func NewEthService(configFile string) EthService {
@@ -126,6 +126,7 @@ func (req *ethRPCService) Call(r *http.Request, params *Params, reply *string) e
 
 	value, err := Query(chClient, "evmscc", Strip0xFromHex(params.To), args)
 	if err != nil {
+		fmt.Printf("Failed to query: %s\n", err)
 		return err
 	}
 
@@ -155,6 +156,7 @@ func (req *ethRPCService) SendTransaction(r *http.Request, params *Params, reply
 	//Maybe change to an async transaction
 	_, txID, err := chClient.ExecuteTx(txReq)
 	if err != nil {
+		fmt.Printf("Failed to execute transaction: %s\n", err)
 		return err
 	}
 
@@ -181,6 +183,7 @@ func (req *ethRPCService) GetTransactionReceipt(r *http.Request, param *DataPara
 
 	b, err := Query(chClient, "qscc", "GetBlockByTxID", args)
 	if err != nil {
+		fmt.Printf("Failed to query qscc: %s\n", err)
 		return err
 	}
 

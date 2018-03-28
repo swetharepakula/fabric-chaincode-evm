@@ -12,7 +12,7 @@ Set up your web3 console
   > Web3 = require('web3')
   > web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:5000"))
   ```
-1. Pick a random 160 bit address and set the default account. The address does not matter because the account will be deteremined by the public key that was configured in the SDK config
+1. Pick a random 160 bit address and set the default account. The address does not matter because the account will be determined by the public key that was configured in the SDK config
   ```
   > web3.eth.defaultAccount = '0x8888f1f195afa192cfee860698584c030f4c9db1'
   ```
