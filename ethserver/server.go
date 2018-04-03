@@ -59,7 +59,7 @@ type EthServer struct {
 }
 
 var defaultUser = "User1"
-var channelID = "channel1"
+var channelID = "mychannel"
 var zeroAddress = make([]byte, 20)
 
 func NewEthService(configFile string) EthService {
