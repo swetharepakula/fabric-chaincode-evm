@@ -21,8 +21,8 @@ Interacting with Solidity Contracts in Fabric
 
 Set up the Ethereum JSON RPC Server
 1. Create Fabric SDK config to match the Fabric network. If running locally using `docker-compose`, you can do `docker ps -a` to get all the ip:port combinations you need. Here is a [sample]().
-1. Set the environment variable ETHSERVER_CONFIG to the absolute path to the configuration you created in step 1.
-1. Run the ethserver by `go run main.go`. This will start the server at `https://localhost:5000`. **NOTE** Go 1.9.4 and higher will result in a build error
+1. Set the environment variable `ETHSERVER_CONFIG` to the absolute path to the configuration you created in step 1. A sample one is
+1. Run the ethserver by `./build/fabricProxy`. This will start the server at `https://localhost:5000`.
 **NOTE** The fabric proxy is hardcoded to use `mychannel` as the channel.
 
 Set up your web3 console
