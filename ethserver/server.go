@@ -59,7 +59,7 @@ type EthServer struct {
 }
 
 var defaultUser = "User1"
-var channelID = "mychannel"
+var channelID = "channel1"
 var zeroAddress = make([]byte, 20)
 
 func NewEthService(configFile string) EthService {
@@ -95,6 +95,7 @@ func (s *EthServer) Start(port int) {
 }
 
 func (req *ethRPCService) GetCode(r *http.Request, args *DataParam, reply *string) error {
+	fmt.Println("Recieved a request for GetCode")
 
 	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
 	if err != nil {
@@ -105,16 +106,22 @@ func (req *ethRPCService) GetCode(r *http.Request, args *DataParam, reply *strin
 
 	queryArgs := [][]byte{[]byte(Strip0xFromHex(string(*args)))}
 
+	fmt.Println("About to query the `evmscc`")
 	value, err := Query(chClient, "evmscc", "getCode", queryArgs)
 	if err != nil {
 		fmt.Printf("Failed to query: %s\n", err)
 	}
+	fmt.Println("About to query the `evmscc`")
 	*reply = string(value)
+
+	fmt.Println("Returning from GetCode")
 
 	return nil
 }
 
 func (req *ethRPCService) Call(r *http.Request, params *Params, reply *string) error {
+
+	fmt.Println("Received a request for Call")
 
 	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
 	if err != nil {
@@ -124,6 +131,7 @@ func (req *ethRPCService) Call(r *http.Request, params *Params, reply *string) e
 
 	args := [][]byte{[]byte(Strip0xFromHex(params.Data))}
 
+	fmt.Println("About to query the `evmscc`")
 	value, err := Query(chClient, "evmscc", Strip0xFromHex(params.To), args)
 	if err != nil {
 		fmt.Printf("Failed to query: %s\n", err)
@@ -131,11 +139,13 @@ func (req *ethRPCService) Call(r *http.Request, params *Params, reply *string) e
 	}
 
 	*reply = "0x" + hex.EncodeToString(value)
+	fmt.Println("Returning from Call")
 
 	return nil
 }
 
 func (req *ethRPCService) SendTransaction(r *http.Request, params *Params, reply *string) error {
+	fmt.Println("Recieved a request for SendTransaction")
 	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
 	if err != nil {
 		return err
@@ -152,6 +162,7 @@ func (req *ethRPCService) SendTransaction(r *http.Request, params *Params, reply
 		Args:        [][]byte{[]byte(Strip0xFromHex(params.Data))},
 	}
 
+	fmt.Println("About to execute a transaction")
 	//Return only the transaction ID
 	//Maybe change to an async transaction
 	_, txID, err := chClient.ExecuteTx(txReq)
@@ -161,11 +172,14 @@ func (req *ethRPCService) SendTransaction(r *http.Request, params *Params, reply
 	}
 
 	*reply = txID.ID
+	fmt.Println("Returning from SendTransaction")
 
 	return nil
 }
 
 func (req *ethRPCService) GetTransactionReceipt(r *http.Request, param *DataParam, reply *TxReceipt) error {
+	fmt.Println("Recieved a request for GetTransactionReceipt")
+
 	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
 
 	args := [][]byte{[]byte(channelID), []byte(*param)}
@@ -239,6 +253,8 @@ func (req *ethRPCService) GetTransactionReceipt(r *http.Request, param *DataPara
 		receipt.ContractAddress = string(respPayload.GetResponse().GetPayload())
 	}
 	*reply = receipt
+
+	fmt.Println("Returning from GetTransactionReceipt")
 
 	return nil
 }

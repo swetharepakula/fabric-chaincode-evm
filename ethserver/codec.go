@@ -33,5 +33,7 @@ func (r *codecRequest) Method() (string, error) {
 		return "", err
 	}
 	method := strings.Split(m, "_")
-	return fmt.Sprintf("%s.%s", method[0], strings.Title(method[1])), nil
+	modifiedMethod := fmt.Sprintf("%s.%s", method[0], strings.Title(method[1]))
+	fmt.Println("Request came in for this method: ", modifiedMethod)
+	return modifiedMethod, nil
 }
