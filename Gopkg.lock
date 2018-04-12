@@ -14,6 +14,12 @@
   revision = "2be2f12b358dc57d70b8f501b00be450192efbc3"
 
 [[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
   name = "github.com/fsouza/go-dockerclient"
   packages = [
     ".",
@@ -92,10 +98,20 @@
   name = "github.com/hyperledger/burrow"
   packages = [
     "account",
+    "account/state",
     "binary",
+    "event",
+    "execution/evm",
+    "execution/evm/abi",
     "execution/evm/asm",
     "execution/evm/asm/bc",
-    "permission/types"
+    "execution/evm/events",
+    "execution/evm/sha3",
+    "logging",
+    "logging/structure",
+    "permission",
+    "permission/types",
+    "process"
   ]
   revision = "a3f2b9251b2ce4f21b2993f1b6918c4ce7fe2d5d"
 
@@ -235,6 +251,12 @@
   version = "v0.8.0"
 
 [[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/spf13/cast"
   packages = ["."]
   revision = "8965335b8c7107321228e3e3702cab9832751bac"
@@ -256,6 +278,15 @@
   name = "github.com/spf13/viper"
   packages = ["."]
   revision = "1967d93db724f4a5c0e101307e96d82ff520a067"
+
+[[projects]]
+  name = "github.com/stretchr/testify"
+  packages = [
+    "assert",
+    "require"
+  ]
+  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
+  version = "v1.2.1"
 
 [[projects]]
   branch = "master"
@@ -286,7 +317,9 @@
   name = "github.com/tendermint/tmlibs"
   packages = [
     "common",
-    "log"
+    "log",
+    "pubsub",
+    "pubsub/query"
   ]
   revision = "91b4b534ad78e442192c8175db92a06a51064064"
   version = "v0.6.0"
@@ -404,6 +437,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0eaf9f342095f540fdcc840ba15a5d5bdff5176386f04b5dacc309004dbc5375"
+  inputs-digest = "4f74a7b52bbc9962fe7b5cfb8f9b5e28263675926020712f72a6a109acfc80e2"
   solver-name = "gps-cdcl"
   solver-version = 1
