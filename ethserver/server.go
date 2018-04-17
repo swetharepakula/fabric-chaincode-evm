@@ -47,10 +47,12 @@ type Params struct {
 }
 
 type TxReceipt struct {
-	TransactionHash string
-	BlockHash       string
-	BlockNumber     string
-	ContractAddress string
+	TransactionHash   string
+	BlockHash         string
+	BlockNumber       string
+	ContractAddress   string
+	GasUsed           int
+	CumulativeGasUsed int
 }
 
 type EthServer struct {
@@ -172,7 +174,7 @@ func (req *ethRPCService) SendTransaction(r *http.Request, params *Params, reply
 	}
 
 	*reply = txID.ID
-	fmt.Println("Returning from SendTransaction")
+	fmt.Println("Returning from SendTransaction, returning txID: ", txID.ID)
 
 	return nil
 }
@@ -237,9 +239,11 @@ func (req *ethRPCService) GetTransactionReceipt(r *http.Request, param *DataPara
 	}
 
 	receipt := TxReceipt{
-		TransactionHash: string(*param),
-		BlockHash:       hex.EncodeToString(blkHeader.Hash()),
-		BlockNumber:     strconv.FormatUint(blkHeader.GetNumber(), 10),
+		TransactionHash:   string(*param),
+		BlockHash:         hex.EncodeToString(blkHeader.Hash()),
+		BlockNumber:       strconv.FormatUint(blkHeader.GetNumber(), 10),
+		GasUsed:           0,
+		CumulativeGasUsed: 0,
 	}
 
 	args = invokeSpec.GetChaincodeSpec().GetInput().Args
@@ -254,7 +258,7 @@ func (req *ethRPCService) GetTransactionReceipt(r *http.Request, param *DataPara
 	}
 	*reply = receipt
 
-	fmt.Println("Returning from GetTransactionReceipt")
+	fmt.Println("Returning from GetTransactionReceipt, returing receipt: ", receipt)
 
 	return nil
 }
