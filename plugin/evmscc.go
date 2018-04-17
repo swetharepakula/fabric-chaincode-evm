@@ -38,7 +38,6 @@ import (
 var logger = flogging.MustGetLogger("evmscc")
 var evmLogger = logging.NewNoopLogger()
 
-
 func New() shim.Chaincode {
 	return &EvmChaincode{}
 }
@@ -211,3 +210,5 @@ func identityToAddr(id []byte) (account.Address, error) {
 
 	return account.AddressFromWord256(sha3.Sum256(pubkeyBytes)), nil
 }
+
+func main() {}
