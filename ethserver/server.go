@@ -93,6 +93,7 @@ func (s *EthServer) Start(port int) {
 	r := mux.NewRouter()
 	r.Handle("/", s.Server)
 
+	fmt.Println("Starting the server")
 	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 }
 
@@ -124,6 +125,7 @@ func (req *ethRPCService) GetCode(r *http.Request, args *DataParam, reply *strin
 func (req *ethRPCService) Call(r *http.Request, params *Params, reply *string) error {
 
 	fmt.Println("Received a request for Call")
+	fmt.Printf("Data that is being sent:%s \n\n", params.Data)
 
 	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
 	if err != nil {
@@ -148,6 +150,7 @@ func (req *ethRPCService) Call(r *http.Request, params *Params, reply *string) e
 
 func (req *ethRPCService) SendTransaction(r *http.Request, params *Params, reply *string) error {
 	fmt.Println("Recieved a request for SendTransaction")
+	fmt.Printf("Data that is being sent:%s \n\n", params.Data)
 	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
 	if err != nil {
 		return err
