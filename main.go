@@ -8,7 +8,11 @@ import (
 
 func main() {
 	configFile := os.Getenv("ETHSERVER_CONFIG")
-	ethService := ethserver.NewEthService(configFile)
+	user := os.Getenv("ETHSERVER_USER")
+	if user == "" {
+		user = "User1"
+	}
+	ethService := ethserver.NewEthService(configFile, user)
 	server := ethserver.NewEthServer(ethService)
 
 	server.Start(5000)

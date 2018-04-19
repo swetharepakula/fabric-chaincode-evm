@@ -29,10 +29,12 @@ type EthService interface {
 	Call(*http.Request, *Params, *string) error
 	SendTransaction(*http.Request, *Params, *string) error
 	GetTransactionReceipt(*http.Request, *DataParam, *TxReceipt) error
+	Accounts(*http.Request, *DataParam, *[]string) error
 }
 
 type ethRPCService struct {
-	sdk *fabsdk.FabricSDK
+	sdk  *fabsdk.FabricSDK
+	user string
 }
 
 type DataParam string
@@ -60,11 +62,10 @@ type EthServer struct {
 	listener net.Listener
 }
 
-var defaultUser = "User1"
 var channelID = "channel1"
 var zeroAddress = make([]byte, 20)
 
-func NewEthService(configFile string) EthService {
+func NewEthService(configFile, user string) EthService {
 	fmt.Println(configFile)
 	c := config.FromFile(configFile)
 	sdk, err := fabsdk.New(c)
@@ -73,7 +74,8 @@ func NewEthService(configFile string) EthService {
 	}
 
 	return &ethRPCService{
-		sdk: sdk,
+		sdk:  sdk,
+		user: user,
 	}
 }
 
@@ -100,7 +102,7 @@ func (s *EthServer) Start(port int) {
 func (req *ethRPCService) GetCode(r *http.Request, args *DataParam, reply *string) error {
 	fmt.Println("Recieved a request for GetCode")
 
-	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
+	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
 	if err != nil {
 		log.Panic("error creating client", err)
 	}
@@ -127,7 +129,7 @@ func (req *ethRPCService) Call(r *http.Request, params *Params, reply *string) e
 	fmt.Println("Received a request for Call")
 	fmt.Printf("Data that is being sent:%s \n\n", params.Data)
 
-	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
+	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
 	if err != nil {
 		return err
 	}
@@ -151,7 +153,7 @@ func (req *ethRPCService) Call(r *http.Request, params *Params, reply *string) e
 func (req *ethRPCService) SendTransaction(r *http.Request, params *Params, reply *string) error {
 	fmt.Println("Recieved a request for SendTransaction")
 	fmt.Printf("Data that is being sent:%s \n\n", params.Data)
-	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
+	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
 	if err != nil {
 		return err
 	}
@@ -185,7 +187,7 @@ func (req *ethRPCService) SendTransaction(r *http.Request, params *Params, reply
 func (req *ethRPCService) GetTransactionReceipt(r *http.Request, param *DataParam, reply *TxReceipt) error {
 	fmt.Println("Recieved a request for GetTransactionReceipt")
 
-	chClient, err := req.sdk.NewChannelClient(channelID, defaultUser)
+	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
 
 	args := [][]byte{[]byte(channelID), []byte(*param)}
 
@@ -262,6 +264,33 @@ func (req *ethRPCService) GetTransactionReceipt(r *http.Request, param *DataPara
 	*reply = receipt
 
 	fmt.Println("Returning from GetTransactionReceipt, returing receipt: ", receipt)
+
+	return nil
+}
+
+func (req *ethRPCService) Accounts(r *http.Request, params *DataParam, reply *[]string) error {
+	fmt.Println("Recieved a request for Accounts")
+
+	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
+	if err != nil {
+		log.Panic("error creating client", err)
+		return err
+	}
+
+	defer chClient.Close()
+
+	queryArgs := [][]byte{}
+
+	fmt.Println("About to query the `evmscc`")
+	value, err := Query(chClient, "evmscc", "account", queryArgs)
+	if err != nil {
+		fmt.Printf("Failed to query: %s\n", err)
+		return err
+	}
+	fmt.Println("About to query the `evmscc`")
+	*reply = []string{"0x" + strings.ToLower(string(value))}
+
+	fmt.Println("Returning from Accounts")
 
 	return nil
 }
