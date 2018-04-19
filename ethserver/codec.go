@@ -1,3 +1,9 @@
+/*
+Copyright IBM Corp. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package ethserver
 
 import (
@@ -5,7 +11,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gorilla/rpc/v2"
 	"github.com/gorilla/rpc/v2/json2"
 )
 

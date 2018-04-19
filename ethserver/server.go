@@ -1,3 +1,9 @@
+/*
+Copyright IBM Corp. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package ethserver
 
 import (
@@ -7,12 +13,12 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/rpc"
 	"strconv"
 	"strings"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/rpc/v2"
 	"github.com/hyperledger/fabric-sdk-go/api/apitxn"
 	"github.com/hyperledger/fabric-sdk-go/pkg/config"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
