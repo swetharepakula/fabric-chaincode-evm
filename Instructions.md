@@ -1,7 +1,7 @@
 ##Running the Ethereum Server:
 In the root directory of this repo (fabric-chaincode-evm) run:
 ```
-ETHSERVER_CONFIG=<path to cluster sdk config> ETHSERVER_USER=<user certs to be user> go run main.go
+ETHSERVER_CONFIG=<path to cluster sdk config> ETHSERVER_USER=<userID> go run main.go
 ```
 **NOTE** You need a GO Version that is less 1.9.4.
 
@@ -346,3 +346,5 @@ Then using the myContract object you can run the methods:
 > myContract.giveRightToVote(<user account address>)
 > myContract.vote(<proposal index>)
 ```
+
+<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>
