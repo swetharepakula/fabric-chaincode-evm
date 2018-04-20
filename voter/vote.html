@@ -1,0 +1,24 @@
+<html>
+<head>
+<script type="text/javascript" src="bower_components/web3/dist/web3.min.js"></script>
+<script type="text/javascript">
+  function testETH(){
+    console.log('starting...');
+    var Web3 = require('web3');
+    var web3 = new Web3();
+    web3.setProvider(new web3.providers.HttpProvider("http://localhost:5000"));
+    var account = web3.eth.accounts[ 0 ];
+    var balance = "100";
+    console.log('account: ' + account);
+    console.log('balance: ' + balance);
+    document.getElementById('account').innerText = account;
+    document.getElementById('balance').innerText = balance;
+  }
+</script>
+</head>
+<body onload="testETH()">
+    <h1>My first Ethereum Webpage</h1>
+    Account:<div id="account"></div>
+    Balance:<div id="balance"></div>
+</body>
+</html>

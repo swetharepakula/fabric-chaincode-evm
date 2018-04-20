@@ -24,6 +24,7 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/hyperledger/fabric/protos/common"
 	"github.com/hyperledger/fabric/protos/peer"
+	"github.com/rs/cors"
 )
 
 type EthRPCService struct {
@@ -101,8 +102,10 @@ func (s *EthServer) Start(port int) {
 	r := mux.NewRouter()
 	r.Handle("/", s.Server)
 
-	fmt.Println("Starting the server")
-	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
+	fmt.Println("Starting the server on port: %d", port)
+        // TODO: this could use some work to limit domain to localhost
+	handler := cors.Default().Handler(r)
+	http.ListenAndServe(fmt.Sprintf(":%d", port), handler)
 }
 
 func (req *ethRPCService) GetCode(r *http.Request, args *DataParam, reply *string) error {
