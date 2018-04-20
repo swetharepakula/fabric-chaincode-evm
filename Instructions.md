@@ -1,8 +1,9 @@
-Running the Ethereum Server:
+##Running the Ethereum Server:
 In the root directory of this repo (fabric-chaincode-evm) run:
 ```
 ETHSERVER_CONFIG=<path to cluster sdk config> ETHSERVER_USER=<userID> go run main.go
 ```
+**NOTE** You need a GO Version that is less 1.9.4.
 
 In another terminal session we will start up a node session:
 
