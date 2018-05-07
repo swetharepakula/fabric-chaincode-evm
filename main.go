@@ -16,7 +16,7 @@ func main() {
 	configFile := os.Getenv("ETHSERVER_CONFIG")
 	user := os.Getenv("ETHSERVER_USER")
 	if user == "" {
-		user = "User1"
+		user = "9ab9dd6465daf96f9c53abd1d21f5cd2bc0df4ee"
 	}
 	ethService := ethserver.NewEthService(configFile, user)
 	server := ethserver.NewEthServer(ethService)
