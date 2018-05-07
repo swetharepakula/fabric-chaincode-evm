@@ -9,7 +9,10 @@ package ethserver
 import (
 	"bytes"
 	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -27,18 +30,6 @@ import (
 )
 
 type EthRPCService struct {
-	EthService
-}
-
-type EthService interface {
-	GetCode(*http.Request, *DataParam, *string) error
-	Call(*http.Request, *Params, *string) error
-	SendTransaction(*http.Request, *Params, *string) error
-	GetTransactionReceipt(*http.Request, *DataParam, *TxReceipt) error
-	Accounts(*http.Request, *DataParam, *[]string) error
-}
-
-type ethRPCService struct {
 	sdk  *fabsdk.FabricSDK
 	user string
 }
@@ -54,6 +45,10 @@ type Params struct {
 	Nonce    string
 }
 
+type LoginBody struct {
+	UserAddress string `json:"user_address"`
+}
+
 type TxReceipt struct {
 	TransactionHash   string
 	BlockHash         string
@@ -65,13 +60,18 @@ type TxReceipt struct {
 
 type EthServer struct {
 	Server   *rpc.Server
+	Login    *LoginServer
 	listener net.Listener
+}
+
+type LoginServer struct {
+	Eth *EthRPCService
 }
 
 var channelID = "channel1"
 var zeroAddress = make([]byte, 20)
 
-func NewEthService(configFile, user string) EthService {
+func NewEthService(configFile, user string) *EthRPCService {
 	fmt.Println(configFile)
 	c := config.FromFile(configFile)
 	sdk, err := fabsdk.New(c)
@@ -79,34 +79,63 @@ func NewEthService(configFile, user string) EthService {
 		log.Panic("error creating sdk: ", err)
 	}
 
-	return &ethRPCService{
+	return &EthRPCService{
 		sdk:  sdk,
 		user: user,
 	}
 }
 
-func NewEthServer(eth EthService) *EthServer {
+func NewEthServer(eth *EthRPCService) *EthServer {
 	server := rpc.NewServer()
 
-	ethService := EthRPCService{eth}
 	server.RegisterCodec(NewRPCCodec(), "application/json")
-	server.RegisterService(ethService, "eth")
+	server.RegisterService(eth, "eth")
 
 	return &EthServer{
 		Server: server,
+		Login: &LoginServer{
+			Eth: eth,
+		},
 	}
 }
 
 func (s *EthServer) Start(port int) {
 	r := mux.NewRouter()
 	r.Handle("/", s.Server)
+	r.Handle("/login", s.Login)
 
 	fmt.Println("Starting the server")
 	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 }
 
-func (req *ethRPCService) GetCode(r *http.Request, args *DataParam, reply *string) error {
+func (s *LoginServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		errString := fmt.Sprintf("Failed to read request body: %s", err.Error())
+		rw.Write([]byte(errString))
+		rw.WriteHeader(500)
+	}
+
+	var loginBody LoginBody
+	err = json.Unmarshal(body, &loginBody)
+	if err != nil {
+		errString := fmt.Sprintf("Failed to unmarshal body: %s", err.Error())
+		fmt.Println(errString)
+		rw.Write([]byte(errString))
+		rw.WriteHeader(500)
+	}
+
+	s.Eth.user = loginBody.UserAddress
+
+	rw.WriteHeader(200)
+}
+
+func (req *EthRPCService) GetCode(r *http.Request, args *DataParam, reply *string) error {
 	fmt.Println("Recieved a request for GetCode")
+
+	if req.user == "" {
+		return errors.New("No user was set. Please login")
+	}
 
 	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
 	if err != nil {
@@ -120,7 +149,7 @@ func (req *ethRPCService) GetCode(r *http.Request, args *DataParam, reply *strin
 	fmt.Println("About to query the `evmscc`")
 	value, err := Query(chClient, "evmscc", "getCode", queryArgs)
 	if err != nil {
-		fmt.Printf("Failed to query: %s\n", err)
+		fmt.Printf("Failed to query: %s\n", err.Error())
 	}
 	fmt.Println("About to query the `evmscc`")
 	*reply = string(value)
@@ -130,10 +159,13 @@ func (req *ethRPCService) GetCode(r *http.Request, args *DataParam, reply *strin
 	return nil
 }
 
-func (req *ethRPCService) Call(r *http.Request, params *Params, reply *string) error {
+func (req *EthRPCService) Call(r *http.Request, params *Params, reply *string) error {
 
 	fmt.Println("Received a request for Call")
 	fmt.Printf("Data that is being sent:%s \n\n", params.Data)
+	if req.user == "" {
+		return errors.New("No user was set. Please login")
+	}
 
 	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
 	if err != nil {
@@ -156,9 +188,12 @@ func (req *ethRPCService) Call(r *http.Request, params *Params, reply *string) e
 	return nil
 }
 
-func (req *ethRPCService) SendTransaction(r *http.Request, params *Params, reply *string) error {
+func (req *EthRPCService) SendTransaction(r *http.Request, params *Params, reply *string) error {
 	fmt.Println("Recieved a request for SendTransaction")
 	fmt.Printf("Data that is being sent:%s \n\n", params.Data)
+	if req.user == "" {
+		return errors.New("No user was set. Please login")
+	}
 	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
 	if err != nil {
 		return err
@@ -190,9 +225,12 @@ func (req *ethRPCService) SendTransaction(r *http.Request, params *Params, reply
 	return nil
 }
 
-func (req *ethRPCService) GetTransactionReceipt(r *http.Request, param *DataParam, reply *TxReceipt) error {
+func (req *EthRPCService) GetTransactionReceipt(r *http.Request, param *DataParam, reply *TxReceipt) error {
 	fmt.Println("Recieved a request for GetTransactionReceipt")
 
+	if req.user == "" {
+		return errors.New("No user was set. Please login")
+	}
 	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
 
 	args := [][]byte{[]byte(channelID), []byte(*param)}
@@ -274,9 +312,12 @@ func (req *ethRPCService) GetTransactionReceipt(r *http.Request, param *DataPara
 	return nil
 }
 
-func (req *ethRPCService) Accounts(r *http.Request, params *DataParam, reply *[]string) error {
+func (req *EthRPCService) Accounts(r *http.Request, params *DataParam, reply *[]string) error {
 	fmt.Println("Recieved a request for Accounts")
 
+	if req.user == "" {
+		return errors.New("No user was set. Please login")
+	}
 	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
 	if err != nil {
 		log.Panic("error creating client", err)
