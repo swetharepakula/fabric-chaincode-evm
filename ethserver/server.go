@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/rpc/v2"
 	"github.com/hyperledger/fabric-sdk-go/api/apitxn"
@@ -104,8 +105,11 @@ func (s *EthServer) Start(port int) {
 	r.Handle("/", s.Server)
 	r.Handle("/login", s.Login)
 
+	allowedOrigins := handlers.AllowedOrigins([]string{"*"})
+	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "PUT"})
+
 	fmt.Println("Starting the server")
-	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
+	http.ListenAndServe(fmt.Sprintf(":%d", port), handlers.CORS(allowedOrigins, allowedMethods)(r))
 }
 
 func (s *LoginServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -167,7 +171,7 @@ func (req *EthRPCService) Call(r *http.Request, params *Params, reply *string) e
 		return errors.New("No user was set. Please login")
 	}
 
-	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
+	chClient, err := req.sdk.NewChannelClient(channelID, Strip0xFromHex(params.From))
 	if err != nil {
 		return err
 	}
@@ -194,7 +198,7 @@ func (req *EthRPCService) SendTransaction(r *http.Request, params *Params, reply
 	if req.user == "" {
 		return errors.New("No user was set. Please login")
 	}
-	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
+	chClient, err := req.sdk.NewChannelClient(channelID, Strip0xFromHex(params.From))
 	if err != nil {
 		return err
 	}
