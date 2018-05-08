@@ -105,11 +105,12 @@ func (s *EthServer) Start(port int) {
 	r.Handle("/", s.Server)
 	r.Handle("/login", s.Login)
 
+	allowedHeaders := handlers.AllowedHeaders([]string{"Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers", "Access-Control-Allow-Origin", "Content-Type"})
 	allowedOrigins := handlers.AllowedOrigins([]string{"*"})
 	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "PUT"})
 
 	fmt.Println("Starting the server")
-	http.ListenAndServe(fmt.Sprintf(":%d", port), handlers.CORS(allowedOrigins, allowedMethods)(r))
+	http.ListenAndServe(fmt.Sprintf(":%d", port), handlers.CORS(allowedHeaders, allowedOrigins, allowedMethods)(r))
 }
 
 func (s *LoginServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
