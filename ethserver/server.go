@@ -9,10 +9,8 @@ package ethserver
 import (
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -31,8 +29,9 @@ import (
 )
 
 type EthRPCService struct {
-	sdk  *fabsdk.FabricSDK
-	user string
+	sdk     *fabsdk.FabricSDK
+	user    string
+	channel string
 }
 
 type DataParam string
@@ -46,10 +45,6 @@ type Params struct {
 	Nonce    string
 }
 
-type LoginBody struct {
-	UserAddress string `json:"user_address"`
-}
-
 type TxReceipt struct {
 	TransactionHash   string
 	BlockHash         string
@@ -61,18 +56,12 @@ type TxReceipt struct {
 
 type EthServer struct {
 	Server   *rpc.Server
-	Login    *LoginServer
 	listener net.Listener
 }
 
-type LoginServer struct {
-	Eth *EthRPCService
-}
-
-var channelID = "channel1"
 var zeroAddress = make([]byte, 20)
 
-func NewEthService(configFile, user string) *EthRPCService {
+func NewEthService(configFile, user, channel string) *EthRPCService {
 	fmt.Println(configFile)
 	c := config.FromFile(configFile)
 	sdk, err := fabsdk.New(c)
@@ -81,8 +70,9 @@ func NewEthService(configFile, user string) *EthRPCService {
 	}
 
 	return &EthRPCService{
-		sdk:  sdk,
-		user: user,
+		sdk:     sdk,
+		user:    user,
+		channel: channel,
 	}
 }
 
@@ -94,16 +84,12 @@ func NewEthServer(eth *EthRPCService) *EthServer {
 
 	return &EthServer{
 		Server: server,
-		Login: &LoginServer{
-			Eth: eth,
-		},
 	}
 }
 
 func (s *EthServer) Start(port int) {
 	r := mux.NewRouter()
 	r.Handle("/", s.Server)
-	r.Handle("/login", s.Login)
 
 	allowedHeaders := handlers.AllowedHeaders([]string{"Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers", "Access-Control-Allow-Origin", "Content-Type"})
 	allowedOrigins := handlers.AllowedOrigins([]string{"*"})
@@ -113,28 +99,6 @@ func (s *EthServer) Start(port int) {
 	http.ListenAndServe(fmt.Sprintf(":%d", port), handlers.CORS(allowedHeaders, allowedOrigins, allowedMethods)(r))
 }
 
-func (s *LoginServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		errString := fmt.Sprintf("Failed to read request body: %s", err.Error())
-		rw.Write([]byte(errString))
-		rw.WriteHeader(500)
-	}
-
-	var loginBody LoginBody
-	err = json.Unmarshal(body, &loginBody)
-	if err != nil {
-		errString := fmt.Sprintf("Failed to unmarshal body: %s", err.Error())
-		fmt.Println(errString)
-		rw.Write([]byte(errString))
-		rw.WriteHeader(500)
-	}
-
-	s.Eth.user = loginBody.UserAddress
-
-	rw.WriteHeader(200)
-}
-
 func (req *EthRPCService) GetCode(r *http.Request, args *DataParam, reply *string) error {
 	fmt.Println("Recieved a request for GetCode")
 
@@ -142,7 +106,7 @@ func (req *EthRPCService) GetCode(r *http.Request, args *DataParam, reply *strin
 		return errors.New("No user was set. Please login")
 	}
 
-	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
+	chClient, err := req.sdk.NewChannelClient(req.channel, req.user)
 	if err != nil {
 		log.Panic("error creating client", err)
 	}
@@ -172,7 +136,7 @@ func (req *EthRPCService) Call(r *http.Request, params *Params, reply *string) e
 		return errors.New("No user was set. Please login")
 	}
 
-	chClient, err := req.sdk.NewChannelClient(channelID, Strip0xFromHex(params.From))
+	chClient, err := req.sdk.NewChannelClient(req.channel, req.user)
 	if err != nil {
 		return err
 	}
@@ -199,7 +163,7 @@ func (req *EthRPCService) SendTransaction(r *http.Request, params *Params, reply
 	if req.user == "" {
 		return errors.New("No user was set. Please login")
 	}
-	chClient, err := req.sdk.NewChannelClient(channelID, Strip0xFromHex(params.From))
+	chClient, err := req.sdk.NewChannelClient(req.channel, req.user)
 	if err != nil {
 		return err
 	}
@@ -236,9 +200,9 @@ func (req *EthRPCService) GetTransactionReceipt(r *http.Request, param *DataPara
 	if req.user == "" {
 		return errors.New("No user was set. Please login")
 	}
-	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
+	chClient, err := req.sdk.NewChannelClient(req.channel, req.user)
 
-	args := [][]byte{[]byte(channelID), []byte(*param)}
+	args := [][]byte{[]byte(req.channel), []byte(*param)}
 
 	t, err := Query(chClient, "qscc", "GetTransactionByID", args)
 	if err != nil {
@@ -323,7 +287,7 @@ func (req *EthRPCService) Accounts(r *http.Request, params *DataParam, reply *[]
 	if req.user == "" {
 		return errors.New("No user was set. Please login")
 	}
-	chClient, err := req.sdk.NewChannelClient(channelID, req.user)
+	chClient, err := req.sdk.NewChannelClient(req.channel, req.user)
 	if err != nil {
 		log.Panic("error creating client", err)
 		return err

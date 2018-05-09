@@ -7,7 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/hyperledger/fabric-chaincode-evm/ethserver"
 )
@@ -16,10 +18,30 @@ func main() {
 	configFile := os.Getenv("ETHSERVER_CONFIG")
 	user := os.Getenv("ETHSERVER_USER")
 	if user == "" {
-		user = "9ab9dd6465daf96f9c53abd1d21f5cd2bc0df4ee"
+		user = "User1"
 	}
-	ethService := ethserver.NewEthService(configFile, user)
+
+	channel := os.Getenv("ETHSERVER_CHANNEL")
+	if channel == "" {
+		channel = "channel1"
+	}
+
+	ethService := ethserver.NewEthService(configFile, user, channel)
 	server := ethserver.NewEthServer(ethService)
 
-	server.Start(5000)
+	var portNumber int
+	port := os.Getenv("PORT")
+	if port != "" {
+		var err error
+		portNumber, err = strconv.Atoi(port)
+		if err != nil {
+			panic("Error converting value of environment variable PORT to int")
+		}
+	} else {
+		portNumber = 5000
+	}
+
+	fmt.Printf("Starting server at http://0.0.0.0:%d", portNumber)
+
+	server.Start(portNumber)
 }
