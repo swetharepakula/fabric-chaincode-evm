@@ -4,7 +4,11 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 var Web3 = require('web3');
+var user = process.env.ETHSERVER_USER
 var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:5000'));
+if (user == "User2"){
+  var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:5001'));
+}
 web3.eth.defaultAccount = web3.eth.accounts[0];
 console.log("Account: " + web3.eth.defaultAccount);
 
@@ -173,14 +177,33 @@ var votingBytecode = '608060405234801561001057600080fd5b50604051610ae9380380610a
 var VotingContract = web3.eth.contract(votingABI);
 var myContract = null;
 
-if (process.argv.length < 3) {
-  myContract = deploy(VotingContract);
-} else {
-  var address = process.argv[2];
-  myContract = VotingContract.at(address);
+switch(process.argv[2]){
+  case "deploy":
+    myContract = deploy(VotingContract);
+    console.log("Proposals")
+    console.log("proposal[0]: " + myContract.proposals('0').toString());
+    console.log("proposal[1]: " + myContract.proposals('1').toString());
+    process.exit()
+  case "giveRightToVote":
+    var contractAddr = process.argv[3];
+    var userAddr = process.argv[4] 
+    myContract = VotingContract.at(contractAddr);
+    myContract.giveRightToVote(userAddr)
+    process.exit()
+  case "vote":
+    var address = process.argv[3];
+    myContract = VotingContract.at(address);
+    var proposal = process.argv[4]
+    console.log("Current State: ")
+    console.log("proposal[0]: " + myContract.proposals('0').toString());
+    console.log("proposal[1]: " + myContract.proposals('1').toString());
+    console.log("Voting for proposal: " + proposal)
+    myContract.vote(proposal)
+    console.log("After Voting: ")
+    console.log("proposal[0]: " + myContract.proposals('0').toString());
+    console.log("proposal[1]: " + myContract.proposals('1').toString());
+    process.exit()
+  default:
+    console.log("Please specify an action: deploy, giveRightToVote, vote")
+    process.exit()
 }
-console.log("proposal[0]: " + myContract.proposals('0').toString());
-console.log("proposal[1]: " + myContract.proposals('1').toString());
-myContract.vote('0');
-console.log("proposal[0]: " + myContract.proposals('0').toString());
-console.log("proposal[1]: " + myContract.proposals('1').toString());
