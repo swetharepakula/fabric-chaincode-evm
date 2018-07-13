@@ -5,6 +5,8 @@ This is the project for the fabric chaincode shim for the Burrow EVM.
 Please see the draft and evolving design document in [FAB-6590](https://jira.hyperledger.org/browse/FAB-6590).
 
 ## Running the Proxy:
+Clone this repo to `$GOPATH/src/github.com/hyperledger/fabric-chaincode-evm` and make sure you have checked out the `Tutorial` branch.
+
 In the root directory of this repo (fabric-chaincode-evm) run:
 ```
 ETHSERVER_CONFIG=<path to cluster sdk config> go run main.go
