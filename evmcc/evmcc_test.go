@@ -9,12 +9,16 @@ package main_test
 import (
 	"crypto/x509"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"strings"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/hyperledger/burrow/account"
+	"github.com/hyperledger/burrow/binary"
+	"github.com/hyperledger/burrow/execution/evm/events"
+	evm_event "github.com/hyperledger/fabric-chaincode-evm/event"
 	evm "github.com/hyperledger/fabric-chaincode-evm/evmcc"
 	"github.com/hyperledger/fabric-chaincode-evm/mocks"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -516,6 +520,119 @@ H8GZeN2ifTyJzzGo
 						Expect(res.Status).To(Equal(int32(shim.OK)))
 						Expect(hex.EncodeToString(res.Payload)).To(Equal("61000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"))
 					})
+				})
+			})
+		})
+
+		Context("when a smart contract has events", func() {
+			var (
+				userCert = `-----BEGIN CERTIFICATE-----
+MIICGTCCAcCgAwIBAgIRAOdmptMzz5y0A9GOgFLxRNcwCgYIKoZIzj0EAwIwczEL
+MAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWExFjAUBgNVBAcTDVNhbiBG
+cmFuY2lzY28xGTAXBgNVBAoTEG9yZzEuZXhhbXBsZS5jb20xHDAaBgNVBAMTE2Nh
+Lm9yZzEuZXhhbXBsZS5jb20wHhcNMTgwMjEyMDY0MDMyWhcNMjgwMjEwMDY0MDMy
+WjBbMQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMN
+U2FuIEZyYW5jaXNjbzEfMB0GA1UEAwwWVXNlcjFAb3JnMS5leGFtcGxlLmNvbTBZ
+MBMGByqGSM49AgEGCCqGSM49AwEHA0IABEwsU2N6Kqrtl73S7+7/nD/LTfDFVWO4
+q3MTtbckd6MH2zTUj9idLoaQ5VNGJVTRRPs+O6bxlvl0Mitu1rcXFoyjTTBLMA4G
+A1UdDwEB/wQEAwIHgDAMBgNVHRMBAf8EAjAAMCsGA1UdIwQkMCKAIKtXuAgSGNzS
+0Yz91W08FSieahwkOU7pWJvh86pkNuxSMAoGCCqGSM49BAMCA0cAMEQCIDOGUUvv
+SgCqSQONblgBtkKuKgN36VgX+jLhZbaqMNAtAiBXiAHbgYdu3UHBVJwdTYxuFTWJ
+Vc4foA7mruwjI8sEng==
+-----END CERTIFICATE-----`
+
+				creator = marshalCreator("TestOrg", []byte(userCert))
+
+				/*pragma solidity ^0.4.0;
+				  contract Instructor {
+				    string fName;
+				    uint age;
+				    uint salary;
+				    event Setter(string indexed name, uint age, uint salary);
+				    function setInstructor(string _fName, uint _age, uint _salary) public {
+				      fName = _fName;
+				      age = _age;
+				      salary = _salary;
+				      emit Setter(_fName, _age, _salary);
+				    }
+				    function getInstructor() public constant returns (string, uint, uint) {
+				      return (fName, age, salary);
+				    }
+				  }*/
+
+				deployCode       = []byte("608060405234801561001057600080fd5b506103bd806100206000396000f30060806040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633c1b81a514610051578063f1b6dc2e146100ef575b600080fd5b34801561005d57600080fd5b5061006661016c565b6040518080602001848152602001838152602001828103825285818151815260200191508051906020019080838360005b838110156100b2578082015181840152602081019050610097565b50505050905090810190601f1680156100df5780820380516001836020036101000a031916815260200191505b5094505050505060405180910390f35b3480156100fb57600080fd5b5061016a600480360381019080803590602001908201803590602001908080601f01602080910402602001604051908101604052809392919081815260200183838082843782019150505050505091929192908035906020019092919080359060200190929190505050610220565b005b60606000806000600154600254828054600181600116156101000203166002900480601f01602080910402602001604051908101604052809291908181526020018280546001816001161561010002031660029004801561020e5780601f106101e35761010080835404028352916020019161020e565b820191906000526020600020905b8154815290600101906020018083116101f157829003601f168201915b50505050509250925092509250909192565b82600090805190602001906102369291906102ec565b508160018190555080600281905550826040518082805190602001908083835b60208310151561027b5780518252602082019150602081019050602083039250610256565b6001836020036101000a03801982511681845116808217855250505050505090500191505060405180910390207f07799c56122d95245ac79ca171a8d025dc20332ccff95408de17bcaa73c8ca1c8383604051808381526020018281526020019250505060405180910390a2505050565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f1061032d57805160ff191683800117855561035b565b8280016001018555821561035b579182015b8281111561035a57825182559160200191906001019061033f565b5b509050610368919061036c565b5090565b61038e91905b8082111561038a576000816000905550600101610372565b5090565b905600a165627a7a723058200a54d740f061c4a956fa2542cd981c84c585da4841f07de90f012cab629735280029")
+				contractAddress  account.Address
+				SET              = "f1b6dc2e" //"setInstructor(string,uint256,uint256)"
+				GET              = "3c1b81a5" //"getInstructor()"
+				msg              events.EventDataLog
+				msg1             events.EventDataLog
+				messagePayloads  evm_event.MessagePayloads
+				messagePayloads1 evm_event.MessagePayloads
+			)
+
+			BeforeEach(func() {
+				// Set contract creator
+				stub.GetCreatorReturns(creator, nil)
+
+				// zero address, and deploy code is contract creation
+				stub.GetArgsReturns([][]byte{[]byte(account.ZeroAddress.String()), deployCode})
+				res := evmcc.Invoke(stub)
+				Expect(res.Status).To(Equal(int32(shim.OK)))
+				Expect(stub.PutStateCallCount()).To(Equal(2))
+
+				var err error
+				contractAddress, err = account.AddressFromHexString(string(res.Payload))
+				Expect(err).ToNot(HaveOccurred())
+
+				msg = events.EventDataLog{
+					Address: contractAddress,
+					Topics:  []binary.Word256{[32]byte{0x7, 0x79, 0x9c, 0x56, 0x12, 0x2d, 0x95, 0x24, 0x5a, 0xc7, 0x9c, 0xa1, 0x71, 0xa8, 0xd0, 0x25, 0xdc, 0x20, 0x33, 0x2c, 0xcf, 0xf9, 0x54, 0x8, 0xde, 0x17, 0xbc, 0xaa, 0x73, 0xc8, 0xca, 0x1c}, [32]byte{0xec, 0xa6, 0x62, 0xca, 0xe7, 0x47, 0xb4, 0x67, 0x82, 0x2a, 0x1d, 0x79, 0xb1, 0xeb, 0x1a, 0xee, 0xf1, 0x3b, 0xff, 0x8c, 0x77, 0x39, 0x44, 0x34, 0x46, 0xd4, 0xfd, 0x74, 0xfb, 0x15, 0x12, 0x5f}},
+					Data:    []byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x10},
+					Height:  0,
+				}
+
+				msg1 = events.EventDataLog{
+					Address: account.ZeroAddress,
+					Topics:  []binary.Word256{[32]byte{0x7, 0x79, 0x9c, 0x56, 0x12, 0x2d, 0x95, 0x24, 0x5a, 0xc7, 0x9c, 0xa1, 0x71, 0xa8, 0xd0, 0x25, 0xdc, 0x20, 0x33, 0x2c, 0xcf, 0xf9, 0x54, 0x8, 0xde, 0x17, 0xbc, 0xaa, 0x73, 0xc8, 0xca, 0x1c}, [32]byte{0xec, 0xa6, 0x62, 0xca, 0xe7, 0x47, 0xb4, 0x67, 0x82, 0x2a, 0x1d, 0x79, 0xb1, 0xeb, 0x1a, 0xee, 0xf1, 0x3b, 0xff, 0x8c, 0x77, 0x39, 0x44, 0x34, 0x46, 0xd4, 0xfd, 0x74, 0xfb, 0x15, 0x12, 0x5f}},
+					Data:    []byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x10},
+					Height:  0,
+				}
+
+				messagePayloads.Payloads = make([]evm_event.MessagePayload, 0)
+				messagePayloads.Payloads = append(messagePayloads.Payloads, evm_event.MessagePayload{Message: msg})
+
+				messagePayloads1.Payloads = make([]evm_event.MessagePayload, 0)
+				messagePayloads1.Payloads = append(messagePayloads.Payloads, evm_event.MessagePayload{Message: msg1})
+			})
+
+			Context("if the method called emits event(s)", func() {
+				It("sets the chaincode event", func() {
+					stub.GetArgsReturns([][]byte{[]byte(contractAddress.String()), []byte(SET + "00000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000045061756c00000000000000000000000000000000000000000000000000000000")})
+					res := evmcc.Invoke(stub)
+					Expect(res.Status).To(Equal(int32(shim.OK)))
+
+					expectedPayload, ok := json.Marshal(messagePayloads)
+					Expect(ok).ToNot(HaveOccurred())
+
+					Expect(stub.SetEventCallCount()).To(Equal(1))
+					setEventName, setEventPayload := stub.SetEventArgsForCall(0)
+					Expect(setEventName).To(Equal(SET))
+					Expect(setEventPayload).To(Equal([]byte(expectedPayload)))
+
+					var unmarshaledPayloads evm_event.MessagePayloads
+					e := json.Unmarshal(setEventPayload, &unmarshaledPayloads)
+					Expect(e).ToNot(HaveOccurred())
+					Expect(unmarshaledPayloads).To(Equal(messagePayloads))
+					Expect(unmarshaledPayloads.Payloads[0].Message).To(Equal(msg))
+				})
+			})
+
+			Context("if the method called does not emit any events", func() {
+				It("doesn't set any chaincode event", func() {
+					stub.GetArgsReturns([][]byte{[]byte(contractAddress.String()), []byte(GET)})
+					res := evmcc.Invoke(stub)
+					Expect(res.Status).To(Equal(int32(shim.OK)))
+					Expect(stub.SetEventCallCount()).To(Equal(0))
 				})
 			})
 		})
