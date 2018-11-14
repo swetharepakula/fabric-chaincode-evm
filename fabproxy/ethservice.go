@@ -18,7 +18,7 @@ import (
 	"strings"
 
 	"github.com/gogo/protobuf/proto"
-	evm_event "github.com/hyperledger/fabric-chaincode-evm/event"
+	"github.com/hyperledger/burrow/execution/evm/events"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/ledger"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
@@ -89,10 +89,10 @@ type TxReceipt struct {
 	GasUsed           int    `json:"gasUsed"`
 	CumulativeGasUsed int    `json:"cumulativeGasUsed"`
 	To                string `json:"to"`
-	Logs              []Log
-	From              string
-	LogsBloom         Bloom
-	Status            string
+	Logs              []Log  `json:"logs"`
+	// From              string `json:"from"`
+	// LogsBloom         Bloom  `json:"logsBloom"`
+	// Status            string
 }
 
 // Transaction represents an ethereum evm transaction.
@@ -131,15 +131,15 @@ type defaultBlock struct {
 }
 
 type Log struct {
-	Address     string
-	Topics      []string
-	Data        string
-	BlockNumber string
-	TxHash      string
-	TxIndex     string //need to figure this out
-	BlockHash   string
-	Index       string
-	Type        string
+	Address     string   `json:"address"`
+	Topics      []string `json:"topics"`
+	Data        string   `json:"data"`
+	BlockNumber string   `json:"blockNumber"`
+	TxHash      string   `json:"transactionHash"`
+	TxIndex     string   `json:"transactionIndex"`
+	BlockHash   string   `json:"blockHash"`
+	Index       string   `json:"logIndex"`
+	// Type        string
 }
 
 type Bloom [256]byte
@@ -189,8 +189,6 @@ func (s *ethService) SendTransaction(r *http.Request, args *EthArgs, reply *stri
 	if err != nil {
 		return errors.New(fmt.Sprintf("Failed to execute transaction: %s", err.Error()))
 	}
-	//fmt.Printf("%s\n", response.Responses[0].ProposalResponse.Payload)
-	//fmt.Printf("%s\n", response.Responses)
 	*reply = string(response.TransactionID)
 	return nil
 }
@@ -224,7 +222,7 @@ func (s *ethService) GetTransactionReceipt(r *http.Request, txID *string, reply 
 		BlockNumber:       "0x" + strconv.FormatUint(blkHeader.GetNumber(), 16),
 		GasUsed:           0,
 		CumulativeGasUsed: 0,
-		Status:            string(uint64(1)), //replace 1 with t.ChaincodeStatus
+		// Status:            string(uint64(1)), //replace 1 with t.ChaincodeStatus
 	}
 
 	// each byte array in data is a transaction
@@ -273,41 +271,35 @@ func (s *ethService) GetTransactionReceipt(r *http.Request, txID *string, reply 
 		receipt.To = "0x" + to
 	}
 
-	fmt.Println("respPayload:")
-	fmt.Println(respPayload)
-	fmt.Println()
-
 	if respPayload.Events != nil {
-		var eventMsgs evm_event.MessagePayloads
 		chaincodeEvent, err := getChaincodeEvents(respPayload)
 		if err != nil {
 			return errors.New(fmt.Sprintf("Failed to decode chaincode event: %s", err.Error()))
 		}
 
-		ccEventPayload := chaincodeEvent.Payload
-		e := json.Unmarshal(ccEventPayload, &eventMsgs)
-		if e != nil {
-			return errors.New(fmt.Sprintf("Failed to unmarshal chaincode event payload: %s", e.Error()))
+		var eventMsgs []events.EventDataLog
+		err = json.Unmarshal(chaincodeEvent.Payload, &eventMsgs)
+		if err != nil {
+			return errors.New(fmt.Sprintf("Failed to unmarshal chaincode event payload: %s", err.Error()))
 		}
 
 		var txLogs []Log
 		txLogs = make([]Log, 0)
-		for i, evDataLog := range eventMsgs.Payloads {
-			var topics []string
-			topics = make([]string, 0)
-			for _, topic := range evDataLog.Message.Topics {
-				topics = append(topics, topic.String())
+		for i, evDataLog := range eventMsgs {
+			topics := []string{}
+			for _, topic := range evDataLog.Topics {
+				topics = append(topics, "0x"+hex.EncodeToString(topic.Bytes()))
 			}
 			logObj := Log{
-				Address:     evDataLog.Message.Address.String(),
+				Address:     "0x" + strings.ToLower(evDataLog.Address.String()),
 				Topics:      topics,
-				Data:        string(evDataLog.Message.Data),
+				Data:        "0x" + hex.EncodeToString(evDataLog.Data),
 				BlockNumber: receipt.BlockNumber,
-				TxHash:      *txID,
-				//TxIndex:     string(transactionIndex),
-				BlockHash: hex.EncodeToString(blkHeader.GetDataHash()),
-				Index:     string(i),
-				Type:      "mined",
+				TxHash:      "0x" + *txID,
+				TxIndex:     receipt.TransactionIndex,
+				BlockHash:   "0x" + hex.EncodeToString(blkHeader.GetDataHash()),
+				Index:       "0x" + strconv.FormatUint(uint64(i), 16),
+				// Type:      "mined",
 			}
 			txLogs = append(txLogs, logObj)
 		}
@@ -316,7 +308,7 @@ func (s *ethService) GetTransactionReceipt(r *http.Request, txID *string, reply 
 		receipt.Logs = nil
 	}
 
-	receipt.LogsBloom = CreateBloom(receipt.Logs)
+	// receipt.LogsBloom = CreateBloom(receipt.Logs)
 	*reply = receipt
 
 	return nil

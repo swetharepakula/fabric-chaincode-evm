@@ -19,7 +19,6 @@ import (
 	"github.com/hyperledger/burrow/account"
 	"github.com/hyperledger/burrow/binary"
 	"github.com/hyperledger/burrow/execution/evm/events"
-	evm_event "github.com/hyperledger/fabric-chaincode-evm/event"
 	"github.com/hyperledger/fabric-chaincode-evm/fabproxy"
 	"github.com/hyperledger/fabric-chaincode-evm/mocks"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
@@ -351,17 +350,13 @@ var _ = Describe("Ethservice", func() {
 		})
 	})
 
-	FDescribe("GetTransactionReceipt", func() {
+	Describe("GetTransactionReceipt", func() {
 		var (
 			sampleResponse      channel.Response
 			sampleTransaction   *peer.ProcessedTransaction
 			otherTransaction    *peer.ProcessedTransaction
 			sampleBlock         *common.Block
 			sampleTransactionID string
-			msg                 events.EventDataLog
-			messagePayloads     evm_event.MessagePayloads
-			eventPayload        []byte
-			eventBytes          []byte
 			sampleAddress       string
 		)
 
@@ -408,26 +403,29 @@ var _ = Describe("Ethservice", func() {
 				GasUsed:           0,
 				CumulativeGasUsed: 0,
 				To:                "0x" + sampleAddress,
-				Status:            string(uint64(1)),
 			}))
 		})
 
 		Context("when the transaction has associated events", func() {
-			BeforeEach(func() {
+			var (
+				msg          events.EventDataLog
+				eventPayload []byte
+				eventBytes   []byte
+			)
 
+			BeforeEach(func() {
 				var err error
 				addr, err := account.AddressFromBytes([]byte(sampleAddress))
 				Expect(err).ToNot(HaveOccurred())
 
 				msg = events.EventDataLog{
 					Address: addr,
-					Topics:  []binary.Word256{[32]byte{0x7, 0x79, 0x9c, 0x56, 0x12, 0x2d, 0x95, 0x24, 0x5a, 0xc7, 0x9c, 0xa1, 0x71, 0xa8, 0xd0, 0x25, 0xdc, 0x20, 0x33, 0x2c, 0xcf, 0xf9, 0x54, 0x8, 0xde, 0x17, 0xbc, 0xaa, 0x73, 0xc8, 0xca, 0x1c}, [32]byte{0xec, 0xa6, 0x62, 0xca, 0xe7, 0x47, 0xb4, 0x67, 0x82, 0x2a, 0x1d, 0x79, 0xb1, 0xeb, 0x1a, 0xee, 0xf1, 0x3b, 0xff, 0x8c, 0x77, 0x39, 0x44, 0x34, 0x46, 0xd4, 0xfd, 0x74, 0xfb, 0x15, 0x12, 0x5f}},
-					Data:    []byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x10},
+					Topics:  []binary.Word256{binary.RightPadWord256([]byte("sample-topic-1")), binary.RightPadWord256([]byte("sample-topic2"))},
+					Data:    []byte("sample-data"),
 					Height:  0,
 				}
-				messagePayloads.Payloads = make([]evm_event.MessagePayload, 0)
-				messagePayloads.Payloads = append(messagePayloads.Payloads, evm_event.MessagePayload{Message: msg})
-				eventPayload, err = json.Marshal(messagePayloads)
+				events := []events.EventDataLog{msg}
+				eventPayload, err = json.Marshal(events)
 				Expect(err).ToNot(HaveOccurred())
 
 				chaincodeEvent := peer.ChaincodeEvent{
@@ -440,7 +438,7 @@ var _ = Describe("Ethservice", func() {
 				eventBytes, err = proto.Marshal(&chaincodeEvent)
 				Expect(err).ToNot(HaveOccurred())
 
-				tx, err := GetSampleTransaction([][]byte{[]byte(sampleAddress), []byte("sample arg 2")}, []byte("sample-response"), []byte{}, sampleTransactionID)
+				tx, err := GetSampleTransaction([][]byte{[]byte(sampleAddress), []byte("sample arg 2")}, []byte("sample-response"), eventBytes, sampleTransactionID)
 				*sampleTransaction = *tx
 				Expect(err).ToNot(HaveOccurred())
 
@@ -463,30 +461,28 @@ var _ = Describe("Ethservice", func() {
 				Expect(txID).To(Equal(fab.TransactionID(sampleTransactionID)))
 				Expect(reqOpts).To(HaveLen(0))
 
-				var topics []string
-				topics = make([]string, 0)
+				topics := []string{}
 				for _, topic := range msg.Topics {
-					topics = append(topics, topic.String())
+					topics = append(topics, "0x"+hex.EncodeToString(topic.Bytes()))
 				}
 
 				expectedLog := fabproxy.Log{
-					Address:     hex.EncodeToString([]byte(sampleAddress)),
+					Address:     "0x" + hex.EncodeToString([]byte(sampleAddress)),
 					Topics:      topics,
-					Data:        string(msg.Data),
+					Data:        "0x" + hex.EncodeToString(msg.Data),
 					BlockNumber: "0x1f",
-					TxHash:      sampleTransactionID,
-					//TxIndex: ,
-					BlockHash: hex.EncodeToString(sampleBlock.GetHeader().GetDataHash()),
-					Index:     string(0),
-					Type:      "mined",
+					TxHash:      "0x" + sampleTransactionID,
+					TxIndex:     "0x0",
+					BlockHash:   "0x" + hex.EncodeToString(sampleBlock.GetHeader().GetDataHash()),
+					Index:       "0x0",
 				}
 
 				var expectedLogs []fabproxy.Log
 				expectedLogs = make([]fabproxy.Log, 0)
 				expectedLogs = append(expectedLogs, expectedLog)
 
-				var expectedBloom fabproxy.Bloom
-				expectedBloom = fabproxy.CreateBloom(expectedLogs)
+				// var expectedBloom fabproxy.Bloom
+				// expectedBloom = fabproxy.CreateBloom(expectedLogs)
 
 				Expect(reply).To(Equal(fabproxy.TxReceipt{
 					TransactionHash:   sampleTransactionID,
@@ -495,10 +491,9 @@ var _ = Describe("Ethservice", func() {
 					BlockNumber:       "0x1f",
 					GasUsed:           0,
 					CumulativeGasUsed: 0,
-					To:                "0x82373458",
+					To:                "0x" + sampleAddress,
 					Logs:              expectedLogs,
-					LogsBloom:         expectedBloom,
-					Status:            string(uint64(1)),
+					// LogsBloom:         expectedBloom,
 				}))
 			})
 
@@ -543,8 +538,7 @@ var _ = Describe("Ethservice", func() {
 					GasUsed:           0,
 					CumulativeGasUsed: 0,
 					Logs:              nil,
-					LogsBloom:         fabproxy.CreateBloom(nil),
-					Status:            string(uint64(1)),
+					// LogsBloom:         fabproxy.CreateBloom(nil),
 				}))
 			})
 
@@ -577,8 +571,7 @@ var _ = Describe("Ethservice", func() {
 						GasUsed:           0,
 						CumulativeGasUsed: 0,
 						Logs:              nil,
-						LogsBloom:         fabproxy.CreateBloom(nil),
-						Status:            string(uint64(1)),
+						// LogsBloom:         fabproxy.CreateBloom(nil),
 					}))
 				})
 			})

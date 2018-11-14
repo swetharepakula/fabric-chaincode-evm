@@ -16,50 +16,25 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
-type MessageInfo struct {
-	Ctx     context.Context        `json:"ctx"`
-	Message events.EventDataLog    `json:"message"`
-	Tags    map[string]interface{} `json:"tags"`
-}
-
-type MessagePayload struct {
-	Message events.EventDataLog
-}
-
-type MessagePayloads struct {
-	Payloads []MessagePayload `json:"payloads"`
-}
-
 type EventManager struct {
 	stub       shim.ChaincodeStubInterface
-	EventCache []MessageInfo
+	EventCache []events.EventDataLog
 	publisher  event.Publisher
 }
 
 func NewEventManager(stub shim.ChaincodeStubInterface, publisher event.Publisher) *EventManager {
 	return &EventManager{
 		stub:       stub,
-		EventCache: make([]MessageInfo, 0),
+		EventCache: []events.EventDataLog{},
 		publisher:  publisher,
 	}
 }
 
 func (evmgr *EventManager) Flush(eventName string) error {
-	var err error
-	var eventMsgs MessagePayloads
-	eventMsgs.Payloads = make([]MessagePayload, 0)
-
 	if len(evmgr.EventCache) > 0 {
-		for i := 0; i < len(evmgr.EventCache); i++ {
-			eventDataLog := evmgr.EventCache[i].Message
-			msg := MessagePayload{Message: eventDataLog}
-			eventMsgs.Payloads = append(eventMsgs.Payloads, msg)
-		}
-
-		payload, er := json.Marshal(eventMsgs)
-		//I am not sure whether this will ever give an error...
-		if er != nil {
-			return fmt.Errorf("Failed to marshal event messages: %s", er.Error())
+		payload, err := json.Marshal(evmgr.EventCache)
+		if err != nil {
+			return fmt.Errorf("Failed to marshal event messages: %s", err.Error())
 		}
 		err = evmgr.stub.SetEvent(eventName, payload)
 		return err
@@ -74,18 +49,14 @@ func (evmgr *EventManager) Publish(ctx context.Context, message interface{}, tag
 		return fmt.Errorf("type mismatch: expected string but received %T", tags["EventID"])
 	}
 
-	msg, ok1 := message.(*events.EventDataLog)
-	if !ok1 {
+	msg, ok := message.(*events.EventDataLog)
+	if !ok {
 		return fmt.Errorf("type mismatch: expected *events.EventDataLog but received %T", message)
 	}
 
 	//Burrow EVM emits other events related to state (such as account call) as well, but we are only interested in log events
 	if evID[0:3] == "Log" {
-		evmgr.EventCache = append(evmgr.EventCache, MessageInfo{
-			Ctx:     ctx,
-			Message: *msg,
-			Tags:    tags,
-		})
+		evmgr.EventCache = append(evmgr.EventCache, *msg)
 	}
 	return nil
 }
