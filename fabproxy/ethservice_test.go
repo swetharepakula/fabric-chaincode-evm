@@ -349,21 +349,26 @@ var _ = Describe("Ethservice", func() {
 	Describe("GetTransactionReceipt", func() {
 		var (
 			sampleTransaction   *peer.ProcessedTransaction
+			otherTransaction    *peer.ProcessedTransaction
 			sampleBlock         *common.Block
 			sampleTransactionID string
 		)
 
 		BeforeEach(func() {
 			var err error
-			sampleTransaction, err = GetSampleTransaction([][]byte{[]byte("82373458"), []byte("sample arg 2")}, []byte("sample-response"), "1234")
+
+			sampleTransactionID = "1234567123"
+			sampleTransaction, err = GetSampleTransaction([][]byte{[]byte("82373458"), []byte("sample arg 2")}, []byte("sample-response"), sampleTransactionID)
 			Expect(err).ToNot(HaveOccurred())
 
-			sampleBlock, err = GetSampleBlock(31, []byte("12345abcd"))
+			otherTransaction, err = GetSampleTransaction([][]byte{[]byte("1234567"), []byte("sample arg 3")}, []byte("sample-response 2"), "5678")
+			Expect(err).ToNot(HaveOccurred())
+
+			sampleBlock = GetSampleBlockWithTransaction(31, []byte("12345abcd"), otherTransaction, sampleTransaction)
 			Expect(err).ToNot(HaveOccurred())
 
 			mockLedgerClient.QueryBlockByTxIDReturns(sampleBlock, nil)
 			mockLedgerClient.QueryTransactionReturns(sampleTransaction, nil)
-			sampleTransactionID = "1234567123"
 		})
 
 		It("returns the transaction receipt associated to that transaction address", func() {
@@ -384,10 +389,12 @@ var _ = Describe("Ethservice", func() {
 
 			Expect(reply).To(Equal(fabproxy.TxReceipt{
 				TransactionHash:   sampleTransactionID,
+				TransactionIndex:  "0x1",
 				BlockHash:         hex.EncodeToString(sampleBlock.GetHeader().GetDataHash()),
 				BlockNumber:       "0x1f",
 				GasUsed:           0,
 				CumulativeGasUsed: 0,
+				To:                "0x82373458",
 			}))
 		})
 
@@ -398,9 +405,11 @@ var _ = Describe("Ethservice", func() {
 				zeroAddress := make([]byte, hex.EncodedLen(len(fabproxy.ZeroAddress)))
 				hex.Encode(zeroAddress, fabproxy.ZeroAddress)
 
-				tx, err := GetSampleTransaction([][]byte{zeroAddress, []byte("sample arg 2")}, contractAddress, "1234")
+				tx, err := GetSampleTransaction([][]byte{zeroAddress, []byte("sample arg 2")}, contractAddress, sampleTransactionID)
 				*sampleTransaction = *tx
 				Expect(err).ToNot(HaveOccurred())
+
+				*sampleBlock = *GetSampleBlockWithTransaction(31, []byte("12345abcd"), sampleTransaction, otherTransaction)
 			})
 
 			It("returns the contract address in the transaction receipt", func() {
@@ -421,6 +430,7 @@ var _ = Describe("Ethservice", func() {
 
 				Expect(reply).To(Equal(fabproxy.TxReceipt{
 					TransactionHash:   sampleTransactionID,
+					TransactionIndex:  "0x0",
 					BlockHash:         hex.EncodeToString(sampleBlock.GetHeader().GetDataHash()),
 					BlockNumber:       "0x1f",
 					ContractAddress:   string(contractAddress),
@@ -451,6 +461,7 @@ var _ = Describe("Ethservice", func() {
 
 					Expect(reply).To(Equal(fabproxy.TxReceipt{
 						TransactionHash:   sampleTransactionID,
+						TransactionIndex:  "0x0",
 						BlockHash:         hex.EncodeToString(sampleBlock.GetHeader().GetDataHash()),
 						BlockNumber:       "0x1f",
 						ContractAddress:   string(contractAddress),
@@ -661,7 +672,7 @@ var _ = Describe("Ethservice", func() {
 					})
 
 					It("requests a block by number", func() {
-						sampleBlock := GetSampleBlockWithTransactions(uintBlockNumber)
+						sampleBlock := GetSampleBlock(uintBlockNumber, []byte("def\xFF"))
 						mockLedgerClient.QueryBlockReturns(sampleBlock, nil)
 
 						err := ethservice.GetBlockByNumber(&http.Request{}, &args, &reply)
@@ -691,7 +702,7 @@ var _ = Describe("Ethservice", func() {
 					})
 
 					It("returns the block", func() {
-						sampleBlock := GetSampleBlockWithTransactions(uintBlockNumber)
+						sampleBlock := GetSampleBlock(uintBlockNumber, []byte("def\xFF"))
 						mockLedgerClient.QueryBlockReturns(sampleBlock, nil)
 
 						err := ethservice.GetBlockByNumber(&http.Request{}, &args, &reply)
@@ -721,7 +732,7 @@ var _ = Describe("Ethservice", func() {
 				})
 
 				It("returns a block with transactions with detail", func() {
-					sampleBlock := GetSampleBlockWithTransactions(uintBlockNumber)
+					sampleBlock := GetSampleBlock(uintBlockNumber, []byte("def\xFF"))
 					mockLedgerClient.QueryBlockReturns(sampleBlock, nil)
 
 					err := ethservice.GetBlockByNumber(&http.Request{}, &args, &reply)
@@ -781,7 +792,7 @@ var _ = Describe("Ethservice", func() {
 
 		It("gets a transaction", func() {
 			txID := "0x1234"
-			block := GetSampleBlockWithTransactions(1)
+			block := GetSampleBlock(1, []byte("def\xFF"))
 			mockLedgerClient.QueryBlockByTxIDReturns(block, nil)
 			err := ethservice.GetTransactionByHash(&http.Request{}, &txID, &reply)
 			Expect(err).ToNot(HaveOccurred())
@@ -795,13 +806,7 @@ var _ = Describe("Ethservice", func() {
 	})
 })
 
-func GetSampleBlock(blkNumber uint64, blkHash []byte) (*common.Block, error) {
-	return &common.Block{
-		Header: &common.BlockHeader{Number: blkNumber, DataHash: blkHash},
-	}, nil
-}
-
-func GetSampleBlockWithTransactions(blockNumber uint64) *common.Block {
+func GetSampleBlock(blockNumber uint64, blkHash []byte) *common.Block {
 	tx, err := GetSampleTransaction([][]byte{[]byte("12345678"), []byte("sample arg 1")}, []byte("sample-response1"), "5678")
 	Expect(err).ToNot(HaveOccurred())
 	txn1, err := proto.Marshal(tx.TransactionEnvelope)
@@ -812,12 +817,31 @@ func GetSampleBlockWithTransactions(blockNumber uint64) *common.Block {
 	Expect(err).ToNot(HaveOccurred())
 
 	phash := []byte("abc\x00")
-	dhash := []byte("def\xFF")
 	return &common.Block{
 		Header: &common.BlockHeader{Number: blockNumber,
 			PreviousHash: phash,
-			DataHash:     dhash},
+			DataHash:     blkHash},
 		Data: &common.BlockData{Data: [][]byte{txn1, txn2}},
+	}
+}
+
+func GetSampleBlockWithTransaction(blockNumber uint64, blkHash []byte, txns ...*peer.ProcessedTransaction) *common.Block {
+
+	blockData := [][]byte{}
+
+	for _, tx := range txns {
+		txn, err := proto.Marshal(tx.TransactionEnvelope)
+		Expect(err).ToNot(HaveOccurred())
+
+		blockData = append(blockData, txn)
+	}
+
+	phash := []byte("abc\x00")
+	return &common.Block{
+		Header: &common.BlockHeader{Number: blockNumber,
+			PreviousHash: phash,
+			DataHash:     blkHash},
+		Data: &common.BlockData{Data: blockData},
 	}
 }
 
