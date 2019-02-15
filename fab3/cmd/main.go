@@ -144,6 +144,7 @@ func runFab3(cmd *cobra.Command, args []string) error {
 	select {
 	case err = <-errChan:
 	case <-signalChan:
+		logger.Infof("Received termination signal")
 		err = proxy.Shutdown()
 	}
 
