@@ -111,16 +111,17 @@ func runFab3(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to create Fabric SDK Client: %s\n", err)
 	}
-	defer sdk.Close()
 
 	clientChannelContext := sdk.ChannelContext(ch, fabsdk.WithUser(user), fabsdk.WithOrg(org))
 	client, err := channel.New(clientChannelContext)
 	if err != nil {
+		sdk.Close()
 		return fmt.Errorf("Failed to create Fabric SDK Channel Client: %s\n", err)
 	}
 
 	ledger, err := ledger.New(clientChannelContext)
 	if err != nil {
+		sdk.Close()
 		return fmt.Errorf("Failed to create Fabric SDK Ledger Client: %s\n", err)
 	}
 
@@ -146,6 +147,7 @@ func runFab3(cmd *cobra.Command, args []string) error {
 		err = proxy.Shutdown()
 	}
 
+	sdk.Close()
 	if err != nil {
 		logger.Infof("Fab3 has exited with an error: %s", err)
 		return err
