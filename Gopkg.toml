@@ -6,7 +6,7 @@ noverify = [
 ]
 
 [[constraint]]
-  version = "0.23.3"
+  version = "0.24.2"
   name = "github.com/hyperledger/burrow"
 
 [[constraint]]
@@ -62,6 +62,15 @@ noverify = [
 [[override]]
   version = "1.15.0"
   name = "google.golang.org/grpc"
+
+#Constraints from Burrow
+[[override]]
+  revision = "505ab145d0a99da450461ae2c1a9f6cd10d1f447"
+  name = "golang.org/x/crypto"
+
+[[override]]
+  revision = "ed77733ec07dfc8a513741138419b8d9d3de9d2d"
+  name = "github.com/btcsuite/btcd"
 
 #Constraints from fabric-sdk-go
 [[override]]
