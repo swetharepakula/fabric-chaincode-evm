@@ -15,7 +15,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/burrow/acm"
-	"github.com/hyperledger/burrow/binary"
 	"github.com/hyperledger/burrow/crypto"
 	"github.com/hyperledger/burrow/execution/evm"
 	"github.com/hyperledger/burrow/logging"
@@ -91,7 +90,7 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 
 	var gas uint64 = 10000
 	state := statemanager.NewStateManager(stub)
-	evmCache := evm.NewState(state)
+	evmCache := evm.NewState(state, func(_ uint64) []byte { return []byte{} })
 	eventSink := &eventmanager.EventManager{Stub: stub}
 	vm := evm.NewVM(newParams(), callerAddr, nil, evmLogger)
 
@@ -113,6 +112,10 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 		// Update contract seq
 		// If sequence is not incremented every contract a person deploys with have the same contract address.
 		logger.Debugf("Contract sequence number = %d", seq)
+
+		// TODO: We should go back to the old way generating addresses by storing just the sequence number to the address key.
+		// We should recreate the contract address creation.
+		// Burrow now uses transaction hash which wont work for us since we have no access to the block/transaction data from the stub
 		evmCache.IncSequence(callerAddr)
 		if evmErr := evmCache.Error(); evmErr != nil {
 			return shim.Error(fmt.Sprintf("failed to update user account sequence number: %s ", evmErr))
@@ -229,7 +232,6 @@ func (evmcc *EvmChaincode) account(stub shim.ChaincodeStubInterface) pb.Response
 func newParams() evm.Params {
 	return evm.Params{
 		BlockHeight: 0,
-		BlockHash:   binary.Zero256,
 		BlockTime:   0,
 		GasLimit:    0,
 	}
