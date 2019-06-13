@@ -366,6 +366,13 @@ func (s *ethService) GetTransactionByHash(r *http.Request, txID *string, reply *
 	}
 
 	txn.TransactionIndex = index
+	txn.Value = "0x0"
+	txn.GasPrice = "0x0"
+
+	var accounts []string
+	var arg1 string
+	s.Accounts(r, &arg1, &accounts)
+	txn.From = accounts[0]
 
 	to, input, _, err := getTransactionInformation(txPayload)
 	if err != nil {

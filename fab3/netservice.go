@@ -19,6 +19,6 @@ type NetService struct {
 //
 // https://github.com/ethereum/wiki/wiki/JSON-RPC#net_version
 func (s *NetService) Version(r *http.Request, _ *interface{}, reply *string) error {
-	*reply = NetworkID
+	*reply = "0x1"
 	return nil
 }
