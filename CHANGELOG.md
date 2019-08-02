@@ -1,3 +1,24 @@
+## v0.3.0
+Thu Aug  1 19:58:50 PDT 2019
+
+* [e07a76c](https://github.com/hyperledger/fabric-chaincode-evm/commit/e07a76c) [FAB-16187](https://jira.hyperledger.org/browse/FAB-16187) Release v0.3
+* [1bcf21f](https://github.com/hyperledger/fabric-chaincode-evm/commit/1bcf21f) [FAB-15280](https://jira.hyperledger.org/browse/FAB-15280) Allow contracts to create contract
+* [b1dc99e](https://github.com/hyperledger/fabric-chaincode-evm/commit/b1dc99e) [FAB-16186](https://jira.hyperledger.org/browse/FAB-16186) Update transaction fields in docs
+* [c79c9a1](https://github.com/hyperledger/fabric-chaincode-evm/commit/c79c9a1) [FAB-16185](https://jira.hyperledger.org/browse/FAB-16185) Update NetworkID in docs
+* [678c8a2](https://github.com/hyperledger/fabric-chaincode-evm/commit/678c8a2) [FAB-16188](https://jira.hyperledger.org/browse/FAB-16188) Marshal Block based on txns type
+* [d00408e](https://github.com/hyperledger/fabric-chaincode-evm/commit/d00408e) [FAB-16039](https://jira.hyperledger.org/browse/FAB-16039) NetworkID should be less than 53 bits
+* [8e04bdd](https://github.com/hyperledger/fabric-chaincode-evm/commit/8e04bdd) [FAB-15842](https://jira.hyperledger.org/browse/FAB-15842) Net Version returns a quantity
+* [95f9f8a](https://github.com/hyperledger/fabric-chaincode-evm/commit/95f9f8a) [FAB-14069](https://jira.hyperledger.org/browse/FAB-14069) Rename addressgenerator pkg to be address
+* [88201c5](https://github.com/hyperledger/fabric-chaincode-evm/commit/88201c5) [FAB-14069](https://jira.hyperledger.org/browse/FAB-14069) create address generation package
+* [a925da0](https://github.com/hyperledger/fabric-chaincode-evm/commit/a925da0) [FAB-15843](https://jira.hyperledger.org/browse/FAB-15843) Transaction has GasPrice and Value
+* [2a9ed44](https://github.com/hyperledger/fabric-chaincode-evm/commit/2a9ed44) [FAB-15272](https://jira.hyperledger.org/browse/FAB-15272) Minor code edit
+* [b79d2b1](https://github.com/hyperledger/fabric-chaincode-evm/commit/b79d2b1) [FAB-15281](https://jira.hyperledger.org/browse/FAB-15281) Contract Addr is null when empty
+* [18086fa](https://github.com/hyperledger/fabric-chaincode-evm/commit/18086fa) [FAB-15154](https://jira.hyperledger.org/browse/FAB-15154) update fabric-go-sdk dep
+* [20bb52d](https://github.com/hyperledger/fabric-chaincode-evm/commit/20bb52d) [FAB-13600](https://jira.hyperledger.org/browse/FAB-13600) Add eth_getTransactionCount
+* [a3dc85f](https://github.com/hyperledger/fabric-chaincode-evm/commit/a3dc85f) [FAB-14652](https://jira.hyperledger.org/browse/FAB-14652) Add Table of Contents
+* [b8b9c18](https://github.com/hyperledger/fabric-chaincode-evm/commit/b8b9c18) [FAB-14868](https://jira.hyperledger.org/browse/FAB-14868) Update pipeline scripts
+* [42e7f80](https://github.com/hyperledger/fabric-chaincode-evm/commit/42e7f80) [FAB-15116](https://jira.hyperledger.org/browse/FAB-15116) update mocks
+
 ## v0.2.0
 Mon Apr  8 20:58:07 PDT 2019
 
