@@ -5,12 +5,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 declare -a arr=(
-"./event"
-"./eventmanager"
 "./evmcc"
 "./fab3"
 "./integration"
-"./statemanager"
 )
 
 # place the Go build cache directory into the default build tree if it exists
@@ -23,7 +20,7 @@ do
     echo ">>>Checking code under $i/"
 
     echo "Checking with gofmt"
-    OUTPUT="$(gofmt -l -s ./$i | grep -v testdata/ || true)"
+    OUTPUT="$(gofmt -l -s ./$i | grep -v testdata/ | grep -v vendor/ || true)"
     if [[ $OUTPUT ]]; then
         echo "The following files contain gofmt errors"
         echo "$OUTPUT"
@@ -32,7 +29,7 @@ do
     fi
 
     echo "Checking with goimports"
-    OUTPUT="$(goimports -l $i | grep -v testdata/ || true )"
+    OUTPUT="$(goimports -l $i | grep -v testdata/ | grep -v vendor/ || true )"
     if [[ $OUTPUT ]]; then
         echo "The following files contain goimports errors"
         echo $OUTPUT

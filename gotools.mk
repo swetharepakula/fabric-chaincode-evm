@@ -25,7 +25,7 @@ gotools-clean:
 # Special override for ginkgo since we want to use the version vendored with the project
 gotool.ginkgo:
 	@echo "Building github.com/onsi/ginkgo/ginkgo -> ginkgo"
-	@go install ./vendor/github.com/onsi/ginkgo/ginkgo
+	@go install ./integration/vendor/github.com/onsi/ginkgo/ginkgo
 
 # Lock to a versioned dep
 gotool.dep: DEP_VERSION ?= "v0.5.0"

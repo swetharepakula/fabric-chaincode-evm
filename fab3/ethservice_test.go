@@ -30,11 +30,11 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/third_party/github.com/hyperledger/fabric/protos/peer"
 	"github.com/hyperledger/fabric/protos/msp"
 
-	"github.com/hyperledger/fabric-chaincode-evm/event"
+	"github.com/hyperledger/fabric-chaincode-evm/evmcc/event"
 	"github.com/hyperledger/fabric-chaincode-evm/fab3"
 	"github.com/hyperledger/fabric-chaincode-evm/fab3/types"
 
-	fab3_mocks "github.com/hyperledger/fabric-chaincode-evm/mocks/fab3"
+	fab3_mocks "github.com/hyperledger/fabric-chaincode-evm/fab3/mocks"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

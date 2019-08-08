@@ -16,7 +16,7 @@ import (
 	"strings"
 
 	"github.com/hyperledger/fabric-chaincode-evm/fab3"
-	fab3_mocks "github.com/hyperledger/fabric-chaincode-evm/mocks/fab3"
+	fab3_mocks "github.com/hyperledger/fabric-chaincode-evm/fab3/mocks"
 
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/config"

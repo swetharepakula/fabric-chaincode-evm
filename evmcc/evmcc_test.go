@@ -16,10 +16,10 @@ import (
 	"github.com/hyperledger/burrow/acm"
 	"github.com/hyperledger/burrow/crypto"
 	"github.com/hyperledger/burrow/permission"
-	"github.com/hyperledger/fabric-chaincode-evm/address"
-	"github.com/hyperledger/fabric-chaincode-evm/event"
 	evm "github.com/hyperledger/fabric-chaincode-evm/evmcc"
-	evmcc_mocks "github.com/hyperledger/fabric-chaincode-evm/mocks/evmcc"
+	"github.com/hyperledger/fabric-chaincode-evm/evmcc/address"
+	"github.com/hyperledger/fabric-chaincode-evm/evmcc/event"
+	evmcc_mocks "github.com/hyperledger/fabric-chaincode-evm/evmcc/mocks"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/msp"
 
