@@ -9,8 +9,10 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
+	"os"
 	"strings"
 
+	"github.com/go-kit/kit/log"
 	"github.com/hyperledger/burrow/acm"
 	"github.com/hyperledger/burrow/crypto"
 	"github.com/hyperledger/burrow/execution/evm"
@@ -35,7 +37,9 @@ var ContractPerms = permission.AccountPermissions{
 }
 
 var logger = flogging.MustGetLogger("evmcc")
-var evmLogger = logging.NewNoopLogger()
+
+// var evmLogger = logging.NewNoopLogger()
+var evmLogger = logging.NewLogger(log.NewJSONLogger(os.Stdout))
 
 type EvmChaincode struct{}
 
@@ -96,6 +100,7 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 	eventSink := &eventmanager.EventManager{Stub: stub}
 	nonce := crypto.Nonce(callerAddr, []byte(stub.GetTxID()))
 	vm := evm.NewVM(newParams(), callerAddr, nonce, evmLogger)
+	evm.DebugOpcodes(vm)
 
 	if calleeAddr == crypto.ZeroAddress {
 		logger.Debugf("Deploy contract")
