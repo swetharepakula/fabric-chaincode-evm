@@ -11,11 +11,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hyperledger/fabric-chaincode-evm/event"
+	"github.com/hyperledger/fabric-chaincode-evm/evmcc/event"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 
 	"github.com/hyperledger/burrow/execution/errors"
-	"github.com/hyperledger/burrow/execution/evm"
 	"github.com/hyperledger/burrow/execution/exec"
 )
 
@@ -24,7 +23,7 @@ type EventManager struct {
 	EventCache []event.Event
 }
 
-var _ evm.EventSink = &EventManager{}
+var _ exec.EventSink = &EventManager{}
 
 type EventSink interface {
 	Call(call *exec.CallEvent, exception *errors.Exception) error
