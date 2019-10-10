@@ -51,7 +51,7 @@ func (s *stateManager) GetAccount(address crypto.Address) (*acm.Account, error) 
 		return nil, nil
 	}
 
-	var account *acm.Account
+	account := &acm.Account{}
 	err = account.Unmarshal(acctBytes)
 	if err != nil {
 		return nil, err

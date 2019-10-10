@@ -16,6 +16,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/hyperledger/burrow/acm"
 	"github.com/hyperledger/burrow/crypto"
+	"github.com/hyperledger/burrow/genesis"
 	"github.com/hyperledger/burrow/permission"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/msp"
@@ -84,6 +85,22 @@ var _ = Describe("evmcc", func() {
 			Expect(res.Status).To(Equal(int32(shim.OK)))
 			Expect(res.Payload).To(Equal([]byte(nil)))
 		})
+
+		It("sets the default permissions account", func() {
+			res := evmcc.Init(stub)
+			Expect(res.Status).To(Equal(int32(shim.OK)))
+			Expect(res.Payload).To(Equal([]byte(nil)))
+
+			Expect(stub.PutStateCallCount()).To(Equal(1))
+
+			defaultAccount := genesis.PermissionsAccount(evm.ContractPerms)
+			acctBytes, err := defaultAccount.Marshal()
+			Expect(err).ToNot(HaveOccurred())
+			key, value := stub.PutStateArgsForCall(0)
+			Expect(key).To(Equal(crypto.ZeroAddress.String()))
+			Expect(value).To(Equal(acctBytes))
+
+		})
 	})
 
 	Describe("Invoke", func() {
@@ -124,6 +141,9 @@ AiEA0GxTPOXVHo0gJpMbHc9B73TL5ZfDhujoDyjb8DToWPQ=
 		BeforeEach(func() {
 			// Set contract creator
 			stub.GetCreatorReturns(creator, nil)
+
+			res := evmcc.Init(stub)
+			Expect(res.Status).To(Equal(int32(shim.OK)))
 		})
 
 		It("will create and store the runtime bytecode from the deploy bytecode in a contract account with the correct permsissions", func() {
@@ -132,11 +152,12 @@ AiEA0GxTPOXVHo0gJpMbHc9B73TL5ZfDhujoDyjb8DToWPQ=
 			res := evmcc.Invoke(stub)
 			Expect(res.Status).To(Equal(int32(shim.OK)))
 
-			// PutState Call is for setting the code for the contract account
-			Expect(stub.PutStateCallCount()).To(Equal(1))
+			// First call is to set defaul account in init (executed in BeforeEach)
+			// PutState Call is for creating the account & then setting the contract code
+			Expect(stub.PutStateCallCount()).To(Equal(3))
 
 			value := fakeLedger[string(res.Payload)]
-			var contractAcct *acm.Account
+			contractAcct := &acm.Account{}
 			err := contractAcct.Unmarshal(value)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -162,8 +183,9 @@ AiEA0GxTPOXVHo0gJpMbHc9B73TL5ZfDhujoDyjb8DToWPQ=
 				res := evmcc.Invoke(stub)
 				Expect(res.Status).To(Equal(int32(shim.OK)))
 
-				// PutState Call is for setting the code for the contract account
-				Expect(stub.PutStateCallCount()).To(Equal(1))
+				// First call is to set defaul account in init (executed in BeforeEach)
+				// PutState Call is for creating the account & then setting the contract code
+				Expect(stub.PutStateCallCount()).To(Equal(3))
 
 				var err error
 				contractAddress, err = crypto.AddressFromHexString(string(res.Payload))
@@ -268,8 +290,9 @@ AiEA0GxTPOXVHo0gJpMbHc9B73TL5ZfDhujoDyjb8DToWPQ=
 					res := evmcc.Invoke(stub)
 					Expect(res.Status).To(Equal(int32(shim.OK)))
 
-					// PutState Call is for setting the code for the contract account
-					Expect(stub.PutStateCallCount()).To(Equal(1))
+					// First call is to set defaul account in init (executed in BeforeEach)
+					// PutState Call is for creating the account & then setting the contract code
+					Expect(stub.PutStateCallCount()).To(Equal(3))
 
 					contractAddress, err := crypto.AddressFromHexString(string(res.Payload))
 					Expect(err).ToNot(HaveOccurred())
@@ -502,7 +525,7 @@ H8GZeN2ifTyJzzGo
 
 				//check that contract account has been created
 				value := fakeLedger[string(res.Payload)]
-				var contractAcct *acm.Account
+				contractAcct := &acm.Account{}
 				err := contractAcct.Unmarshal(value)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(hex.EncodeToString(contractAcct.EVMCode.Bytes())).To(Equal(runtimeByteCode))
@@ -546,7 +569,7 @@ H8GZeN2ifTyJzzGo
 						stub.GetCreatorReturns(user1, nil)
 						res := evmcc.Invoke(stub)
 						Expect(res.Status).To(Equal(int32(shim.OK)))
-						Expect(stub.PutStateCallCount()).To(Equal(baseCallCount+5), "`vote` should perform 5 writes: contract account, length of proposals, sender.voted, sender.vote, voteCount")
+						Expect(stub.PutStateCallCount()).To(Equal(baseCallCount+6), "`vote` should perform 6 writes: contract account, sets the contract code, length of proposals, sender.voted, sender.vote, voteCount")
 					})
 
 					It("sets the variables of voter 1 (user1) properly", func() {
@@ -825,7 +848,7 @@ Vc4foA7mruwjI8sEng==
 
 				//check that contract account has been created
 				value := fakeLedger[string(res.Payload)]
-				var contractAcct *acm.Account
+				contractAcct := &acm.Account{}
 				err := contractAcct.Unmarshal(value)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(hex.EncodeToString(contractAcct.EVMCode.Bytes())).To(Equal(runtimeCode))

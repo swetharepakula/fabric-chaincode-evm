@@ -15,6 +15,7 @@ import (
 	"github.com/hyperledger/burrow/crypto"
 	"github.com/hyperledger/burrow/execution/engine"
 	"github.com/hyperledger/burrow/execution/evm"
+	"github.com/hyperledger/burrow/genesis"
 	"github.com/hyperledger/burrow/logging"
 	"github.com/hyperledger/burrow/permission"
 	"github.com/hyperledger/fabric/common/flogging"
@@ -42,6 +43,14 @@ var evmLogger = logging.NewNoopLogger()
 type EvmChaincode struct{}
 
 func (evmcc *EvmChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
+	defaultPermissionsAccount := genesis.PermissionsAccount(ContractPerms)
+	encodedAcct, err := defaultPermissionsAccount.Marshal()
+	if err != nil {
+		shim.Error(fmt.Sprintf("failed to marshal default permissions account: %s", err))
+	}
+
+	stub.PutState(hex.EncodeToString(defaultPermissionsAccount.Address.Bytes()), encodedAcct)
+
 	logger.Debugf("Init evmcc, it's no-op")
 	return shim.Success(nil)
 }
@@ -100,7 +109,7 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 		contractAddr := crypto.NewContractAddress(callerAddr, nonce)
 		// Contract account needs to be created before setting code to it
 		perms := permission.NewAccountPermissions(ContractPermFlags)
-		acc := &acm.Account{Address: callerAddr, Permissions: perms}
+		acc := &acm.Account{Address: contractAddr, Permissions: perms}
 		err := state.UpdateAccount(acc)
 		if err != nil {
 			return shim.Error(fmt.Sprintf("failed to create the contract account: %s ", err))
@@ -194,7 +203,7 @@ func (evmcc *EvmChaincode) getCode(stub shim.ChaincodeStubInterface, address []b
 		return shim.Success(acctBytes)
 	}
 
-	var acct *acm.Account
+	acct := &acm.Account{}
 	err = acct.Unmarshal(acctBytes)
 	if err != nil {
 		return shim.Error(fmt.Sprintf("failed to decode contract account: %s", err))
