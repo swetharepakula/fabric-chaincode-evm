@@ -61,17 +61,18 @@ var _ = Describe("Statemanager", func() {
 		It("returns the account associated with the address", func() {
 			expectedAcct := &acm.Account{
 				Address: addr,
-				Code:    []byte("account code"),
+				EVMCode: []byte("account code"),
 			}
 
-			encodedAcct, err := expectedAcct.Encode()
+			encodedAcct, err := expectedAcct.Marshal()
 			Expect(err).ToNot(HaveOccurred())
 			fakeGetLedger[addr.String()] = encodedAcct
 
 			acct, err := sm.GetAccount(addr)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(acct).To(Equal(expectedAcct))
+			Expect(acct.Address).To(Equal(expectedAcct.Address))
+			Expect(acct.EVMCode).To(Equal(expectedAcct.EVMCode))
 		})
 
 		Context("when no account exists", func() {
@@ -98,14 +99,15 @@ var _ = Describe("Statemanager", func() {
 	})
 
 	Describe("GetStorage", func() {
-		var expectedVal, key binary.Word256
+		var key binary.Word256
+		var expectedVal []byte
 		BeforeEach(func() {
-			expectedVal = binary.LeftPadWord256([]byte("storage-value"))
+			expectedVal = []byte("storage-value")
 			key = binary.LeftPadWord256([]byte("key"))
 		})
 
 		It("returns the value associated with the key", func() {
-			fakeGetLedger[addr.String()+hex.EncodeToString(key.Bytes())] = expectedVal.Bytes()
+			fakeGetLedger[addr.String()+hex.EncodeToString(key.Bytes())] = expectedVal
 
 			val, err := sm.GetStorage(addr, key)
 			Expect(err).ToNot(HaveOccurred())
@@ -122,17 +124,17 @@ var _ = Describe("Statemanager", func() {
 				val, err := sm.GetStorage(addr, key)
 				Expect(err).To(HaveOccurred())
 
-				Expect(val).To(Equal(binary.Word256{}))
+				Expect(val).To(BeEmpty())
 			})
 		})
 
 		Context("when a GetStorage is called after an SetStorage on the same key in the same tx", func() {
-			var initialVal, updatedVal binary.Word256
+			var initialVal, updatedVal []byte
 			BeforeEach(func() {
-				initialVal = binary.LeftPadWord256([]byte("storage-value"))
-				updatedVal = binary.LeftPadWord256([]byte("updated-storage-value"))
+				initialVal = []byte("storage-value")
+				updatedVal = []byte("updated-storage-value")
 
-				fakeGetLedger[addr.String()+hex.EncodeToString(key.Bytes())] = initialVal.Bytes()
+				fakeGetLedger[addr.String()+hex.EncodeToString(key.Bytes())] = initialVal
 
 				val, err := sm.GetStorage(addr, key)
 				Expect(err).ToNot(HaveOccurred())
@@ -161,9 +163,9 @@ var _ = Describe("Statemanager", func() {
 
 				expectedAcct := &acm.Account{
 					Address: addr,
-					Code:    initialCode,
+					EVMCode: initialCode,
 				}
-				encodedAcct, err := expectedAcct.Encode()
+				encodedAcct, err := expectedAcct.Marshal()
 				Expect(err).ToNot(HaveOccurred())
 
 				err = sm.UpdateAccount(expectedAcct)
@@ -184,10 +186,10 @@ var _ = Describe("Statemanager", func() {
 
 				updatedAccount := &acm.Account{
 					Address: addr,
-					Code:    []byte("updated account code"),
+					EVMCode: []byte("updated account code"),
 				}
 
-				encodedAcct, err := updatedAccount.Encode()
+				encodedAcct, err := updatedAccount.Marshal()
 				Expect(err).ToNot(HaveOccurred())
 
 				err = sm.UpdateAccount(updatedAccount)
@@ -209,7 +211,7 @@ var _ = Describe("Statemanager", func() {
 			It("returns an error", func() {
 				expectedAcct := &acm.Account{
 					Address: addr,
-					Code:    initialCode,
+					EVMCode: initialCode,
 				}
 
 				err := sm.UpdateAccount(expectedAcct)
@@ -257,23 +259,24 @@ var _ = Describe("Statemanager", func() {
 
 	Describe("SetStorage", func() {
 		var (
-			key, initialVal binary.Word256
-			compKey         string
+			key        binary.Word256
+			initialVal []byte
+			compKey    string
 		)
 
 		BeforeEach(func() {
 
-			initialVal = binary.LeftPadWord256([]byte("storage-value"))
+			initialVal = []byte("storage-value")
 			key = binary.LeftPadWord256([]byte("key"))
 			compKey = addr.String() + hex.EncodeToString(key.Bytes())
 		})
 
 		Context("when key already exists", func() {
 			It("updates the key value pair", func() {
-				err := mockStub.PutState(compKey, initialVal.Bytes())
+				err := mockStub.PutState(compKey, initialVal)
 				Expect(err).ToNot(HaveOccurred())
 
-				updatedVal := binary.LeftPadWord256([]byte("updated-storage-value"))
+				updatedVal := []byte("updated-storage-value")
 
 				err = sm.SetStorage(addr, key, updatedVal)
 				Expect(err).ToNot(HaveOccurred())
@@ -281,7 +284,7 @@ var _ = Describe("Statemanager", func() {
 				Expect(mockStub.PutStateCallCount()).To(Equal(2))
 				putKey, putVal := mockStub.PutStateArgsForCall(1)
 				Expect(putKey).To(Equal(compKey))
-				Expect(putVal).To(Equal(updatedVal.Bytes()))
+				Expect(putVal).To(Equal(updatedVal))
 			})
 		})
 
@@ -293,7 +296,7 @@ var _ = Describe("Statemanager", func() {
 				Expect(mockStub.PutStateCallCount()).To(Equal(1))
 				putKey, putVal := mockStub.PutStateArgsForCall(0)
 				Expect(putKey).To(Equal(compKey))
-				Expect(putVal).To(Equal(initialVal.Bytes()))
+				Expect(putVal).To(Equal(initialVal))
 			})
 		})
 
@@ -318,7 +321,7 @@ var _ = Describe("Statemanager", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(mockStub.PutStateCallCount()).To(Equal(1))
 
-				err = sm.SetStorage(addr, key, binary.Zero256)
+				err = sm.SetStorage(addr, key, []byte{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(mockStub.DelStateCallCount()).To(Equal(1))
 				deleteKey := mockStub.DelStateArgsForCall(0)

@@ -90,7 +90,7 @@ func (s *stateManager) SetStorage(address crypto.Address, key binary.Word256, va
 	compKey := strings.ToLower(address.String()) + hex.EncodeToString(key.Bytes())
 
 	var err error
-	if value == nil {
+	if len(value) == 0 {
 		return s.stub.DelState(compKey)
 	}
 
