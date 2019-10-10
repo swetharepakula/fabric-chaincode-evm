@@ -9,6 +9,7 @@ require (
 	github.com/hyperledger/burrow v0.29.0
 	github.com/hyperledger/fabric v1.4.3
 	github.com/hyperledger/fabric-amcl v0.0.0-20190902191507-f66264322317 // indirect
+	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/onsi/ginkgo v1.10.2
 	github.com/onsi/gomega v1.7.0
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect

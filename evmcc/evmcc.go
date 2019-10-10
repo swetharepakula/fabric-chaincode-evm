@@ -88,13 +88,6 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 
 	var gas uint64 = 10000
 	state := statemanager.NewStateManager(stub)
-	// evmCache := evm.NewState(state, func(height uint64) []byte {
-	// This function is to be used to return the block hash
-	// Currently EVMCC does not support the BLOCKHASH opcode.
-	// This function is only used for that opcode and will not
-	// affect execution if BLOCKHASH is not called.
-	// panic("Block Hash shouldn't be called")
-	// })
 	eventSink := &eventmanager.EventManager{Stub: stub}
 	nonce := crypto.Nonce(callerAddr, []byte(stub.GetTxID()))
 	// vm := evm.NewVM(newParams(), callerAddr, nonce, evmLogger)
@@ -106,14 +99,11 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 		logger.Debugf("Contract nonce number = %d", nonce)
 		contractAddr := crypto.NewContractAddress(callerAddr, nonce)
 		// Contract account needs to be created before setting code to it
-		state.SetAccount(contractAddr)
-		if evmErr := evmCache.Error(); evmErr != nil {
-			return shim.Error(fmt.Sprintf("failed to create the contract account: %s ", evmErr))
-		}
-
-		evmCache.SetPermission(contractAddr, ContractPermFlags, true)
-		if evmErr := evmCache.Error(); evmErr != nil {
-			return shim.Error(fmt.Sprintf("failed to set contract account permissions: %s ", evmErr))
+		perms := permission.NewAccountPermissions(ContractPermFlags)
+		acc := &acm.Account{Address: callerAddr, Permissions: perms}
+		err := state.UpdateAccount(acc)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("failed to create the contract account: %s ", err))
 		}
 
 		callParams := engine.CallParams{
@@ -121,6 +111,7 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 			Caller: callerAddr,
 			Callee: contractAddr,
 			Input:  input,
+			Gas:    &gas,
 		}
 
 		rtCode, evmErr := vm.Execute(state, &Blockchain{}, eventSink, callParams, input)
@@ -131,9 +122,10 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 			return shim.Error(fmt.Sprintf("nil bytecode"))
 		}
 
-		evmCache.InitCode(contractAddr, rtCode)
-		if evmErr := evmCache.Error(); evmErr != nil {
-			return shim.Error(fmt.Sprintf("failed to update contract account: %s", evmErr))
+		acc.EVMCode = rtCode
+		err = state.UpdateAccount(acc)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("failed to update the contract account with code: %s ", err))
 		}
 
 		// Passing the first 4 bytes contract address just created
@@ -142,22 +134,19 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 		// Hex Encode before flushing to ensure no non utf-8 characters
 		// Otherwise proto marshal fails on non utf-8 characters when
 		// the peer tries to marshal the event
-		err := eventSink.Flush(hex.EncodeToString(contractAddr.Bytes()[0:4]))
+		err = eventSink.Flush(hex.EncodeToString(contractAddr.Bytes()[0:4]))
 		if err != nil {
 			return shim.Error(fmt.Sprintf("error in Flush: %s", err))
 		}
 
-		if evmErr := evmCache.Sync(); evmErr != nil {
-			return shim.Error(fmt.Sprintf("failed to sync: %s", evmErr))
-		}
 		// return encoded hex bytes for human-readability
 		return shim.Success([]byte(hex.EncodeToString(contractAddr.Bytes())))
 	} else {
 		logger.Debugf("Invoke contract at %x", calleeAddr.Bytes())
 
-		calleeCode := evmCache.GetCode(calleeAddr)
-		if evmErr := evmCache.Error(); evmErr != nil {
-			return shim.Error(fmt.Sprintf("failed to retrieve contract code: %s", evmErr))
+		calleeAcct, err := state.GetAccount(calleeAddr)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("failed to retrieve contract code: %s", err))
 		}
 
 		callParams := engine.CallParams{
@@ -165,24 +154,20 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 			Caller: callerAddr,
 			Callee: calleeAddr,
 			Input:  input,
+			Gas:    &gas,
 		}
 
-		output, evmErr := vm.Call(evmCache, &Blockchain{}, eventSink, calleeCode)
-		if evmErr != nil {
-			return shim.Error(fmt.Sprintf("failed to execute contract: %s", evmErr))
+		output, err := vm.Execute(state, &Blockchain{}, eventSink, callParams, calleeAcct.EVMCode)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("failed to execute contract: %s", err))
 		}
 
 		// Passing the function hash of the method that has triggered the event
 		// The function hash is the first 8 bytes of the Input argument
 		// The argument is a hex-encoded evm function hash, so we can directly pass the bytes
-		err := eventSink.Flush(string(args[1][0:8]))
+		err = eventSink.Flush(string(args[1][0:8]))
 		if err != nil {
 			return shim.Error(fmt.Sprintf("error in Flush: %s", err))
-		}
-
-		// Sync is required for evm to send writes to the statemanager.
-		if evmErr := evmCache.Sync(); evmErr != nil {
-			return shim.Error(fmt.Sprintf("failed to sync: %s", evmErr))
 		}
 
 		return shim.Success(output)
@@ -209,12 +194,13 @@ func (evmcc *EvmChaincode) getCode(stub shim.ChaincodeStubInterface, address []b
 		return shim.Success(acctBytes)
 	}
 
-	acct, err := acm.Decode(acctBytes)
+	var acct *acm.Account
+	err = acct.Unmarshal(acctBytes)
 	if err != nil {
 		return shim.Error(fmt.Sprintf("failed to decode contract account: %s", err))
 	}
 
-	return shim.Success([]byte(hex.EncodeToString(acct.Code.Bytes())))
+	return shim.Success([]byte(hex.EncodeToString(acct.EVMCode.Bytes())))
 }
 
 func (evmcc *EvmChaincode) account(stub shim.ChaincodeStubInterface) pb.Response {
@@ -223,14 +209,6 @@ func (evmcc *EvmChaincode) account(stub shim.ChaincodeStubInterface) pb.Response
 		return shim.Error(fmt.Sprintf("fail to convert identity to address: %s", err))
 	}
 	return shim.Success([]byte(callerAddr.String()))
-}
-
-func newParams() evm.Params {
-	return evm.Params{
-		BlockHeight: 0,
-		BlockTime:   0,
-		GasLimit:    0,
-	}
 }
 
 func getCallerAddress(stub shim.ChaincodeStubInterface) (crypto.Address, error) {

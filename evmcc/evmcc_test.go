@@ -23,6 +23,7 @@ import (
 	evm "github.com/hyperledger/fabric-chaincode-evm/evmcc"
 	"github.com/hyperledger/fabric-chaincode-evm/evmcc/address"
 	"github.com/hyperledger/fabric-chaincode-evm/evmcc/event"
+	"github.com/hyperledger/fabric-chaincode-evm/evmcc/mocks"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -135,10 +136,11 @@ AiEA0GxTPOXVHo0gJpMbHc9B73TL5ZfDhujoDyjb8DToWPQ=
 			Expect(stub.PutStateCallCount()).To(Equal(1))
 
 			value := fakeLedger[string(res.Payload)]
-			contractAcct, err := acm.Decode(value)
+			var contractAcct *acm.Account
+			err := contractAcct.Unmarshal(value)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(hex.EncodeToString(contractAcct.Code.Bytes())).To(Equal(runtimeCode))
+			Expect(hex.EncodeToString(contractAcct.EVMCode.Bytes())).To(Equal(runtimeCode))
 			Expect(hex.EncodeToString(contractAcct.Address.Bytes())).To(Equal(string(res.Payload)))
 
 			Expect(contractAcct.Permissions).To(Equal(evm.ContractPerms))
@@ -500,9 +502,10 @@ H8GZeN2ifTyJzzGo
 
 				//check that contract account has been created
 				value := fakeLedger[string(res.Payload)]
-				contractAcct, err := acm.Decode(value)
+				var contractAcct *acm.Account
+				err := contractAcct.Unmarshal(value)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(hex.EncodeToString(contractAcct.Code.Bytes())).To(Equal(runtimeByteCode))
+				Expect(hex.EncodeToString(contractAcct.EVMCode.Bytes())).To(Equal(runtimeByteCode))
 
 				contractAddress, err = crypto.AddressFromHexString(string(res.Payload))
 				Expect(err).ToNot(HaveOccurred())
@@ -822,9 +825,10 @@ Vc4foA7mruwjI8sEng==
 
 				//check that contract account has been created
 				value := fakeLedger[string(res.Payload)]
-				contractAcct, err := acm.Decode(value)
+				var contractAcct *acm.Account
+				err := contractAcct.Unmarshal(value)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(hex.EncodeToString(contractAcct.Code.Bytes())).To(Equal(runtimeCode))
+				Expect(hex.EncodeToString(contractAcct.EVMCode.Bytes())).To(Equal(runtimeCode))
 
 				contractAddress, err = crypto.AddressFromHexString(string(res.Payload))
 				Expect(err).ToNot(HaveOccurred())

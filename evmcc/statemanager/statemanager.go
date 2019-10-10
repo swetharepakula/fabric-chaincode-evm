@@ -19,10 +19,10 @@ import (
 
 type StateManager interface {
 	GetAccount(address crypto.Address) (*acm.Account, error)
-	GetStorage(address crypto.Address, key binary.Word256) (binary.Word256, error)
+	GetStorage(address crypto.Address, key binary.Word256) ([]byte, error)
 	UpdateAccount(updatedAccount *acm.Account) error
 	RemoveAccount(address crypto.Address) error
-	SetStorage(address crypto.Address, key, value binary.Word256) error
+	SetStorage(address crypto.Address, key binary.Word256, value []byte) error
 	GetMetadata(metahash acmstate.MetadataHash) (string, error)
 	SetMetadata(metahash acmstate.MetadataHash, metadata string) error
 }
@@ -31,13 +31,13 @@ type stateManager struct {
 	stub shim.ChaincodeStubInterface
 	// We will be looking into adding a cache for accounts later
 	// The cache can be single threaded because the statemanager is 1-1 with the evm which is single threaded.
-	cache map[string]binary.Word256
+	cache map[string][]byte
 }
 
 func NewStateManager(stub shim.ChaincodeStubInterface) StateManager {
 	return &stateManager{
 		stub:  stub,
-		cache: make(map[string]binary.Word256),
+		cache: make(map[string][]byte),
 	}
 }
 
@@ -59,7 +59,7 @@ func (s *stateManager) GetAccount(address crypto.Address) (*acm.Account, error) 
 	return account, nil
 }
 
-func (s *stateManager) GetStorage(address crypto.Address, key binary.Word256) (binary.Word256, error) {
+func (s *stateManager) GetStorage(address crypto.Address, key binary.Word256) ([]byte, error) {
 	compKey := strings.ToLower(address.String()) + hex.EncodeToString(key.Bytes())
 
 	if val, ok := s.cache[compKey]; ok {
@@ -68,10 +68,10 @@ func (s *stateManager) GetStorage(address crypto.Address, key binary.Word256) (b
 
 	val, err := s.stub.GetState(compKey)
 	if err != nil {
-		return binary.Word256{}, err
+		return []byte{}, err
 	}
 
-	return binary.LeftPadWord256(val), nil
+	return val, nil
 }
 
 func (s *stateManager) UpdateAccount(updatedAccount *acm.Account) error {
@@ -86,15 +86,15 @@ func (s *stateManager) RemoveAccount(address crypto.Address) error {
 	return s.stub.DelState(strings.ToLower(address.String()))
 }
 
-func (s *stateManager) SetStorage(address crypto.Address, key, value binary.Word256) error {
+func (s *stateManager) SetStorage(address crypto.Address, key binary.Word256, value []byte) error {
 	compKey := strings.ToLower(address.String()) + hex.EncodeToString(key.Bytes())
 
 	var err error
-	if value == binary.Zero256 {
+	if value == nil {
 		return s.stub.DelState(compKey)
 	}
 
-	if err = s.stub.PutState(compKey, value.Bytes()); err == nil {
+	if err = s.stub.PutState(compKey, value); err == nil {
 		s.cache[compKey] = value
 	}
 
