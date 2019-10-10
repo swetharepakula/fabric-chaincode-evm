@@ -13,6 +13,7 @@ import (
 
 	"github.com/hyperledger/burrow/acm"
 	"github.com/hyperledger/burrow/crypto"
+	"github.com/hyperledger/burrow/execution/engine"
 	"github.com/hyperledger/burrow/execution/evm"
 	"github.com/hyperledger/burrow/logging"
 	"github.com/hyperledger/burrow/permission"
@@ -87,16 +88,17 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 
 	var gas uint64 = 10000
 	state := statemanager.NewStateManager(stub)
-	evmCache := evm.NewState(state, func(height uint64) []byte {
-		// This function is to be used to return the block hash
-		// Currently EVMCC does not support the BLOCKHASH opcode.
-		// This function is only used for that opcode and will not
-		// affect execution if BLOCKHASH is not called.
-		panic("Block Hash shouldn't be called")
-	})
+	// evmCache := evm.NewState(state, func(height uint64) []byte {
+	// This function is to be used to return the block hash
+	// Currently EVMCC does not support the BLOCKHASH opcode.
+	// This function is only used for that opcode and will not
+	// affect execution if BLOCKHASH is not called.
+	// panic("Block Hash shouldn't be called")
+	// })
 	eventSink := &eventmanager.EventManager{Stub: stub}
 	nonce := crypto.Nonce(callerAddr, []byte(stub.GetTxID()))
-	vm := evm.NewVM(newParams(), callerAddr, nonce, evmLogger)
+	// vm := evm.NewVM(newParams(), callerAddr, nonce, evmLogger)
+	vm := evm.New(evm.Options{})
 
 	if calleeAddr == crypto.ZeroAddress {
 		logger.Debugf("Deploy contract")
@@ -104,7 +106,7 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 		logger.Debugf("Contract nonce number = %d", nonce)
 		contractAddr := crypto.NewContractAddress(callerAddr, nonce)
 		// Contract account needs to be created before setting code to it
-		evmCache.CreateAccount(contractAddr)
+		state.SetAccount(contractAddr)
 		if evmErr := evmCache.Error(); evmErr != nil {
 			return shim.Error(fmt.Sprintf("failed to create the contract account: %s ", evmErr))
 		}
@@ -114,7 +116,14 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 			return shim.Error(fmt.Sprintf("failed to set contract account permissions: %s ", evmErr))
 		}
 
-		rtCode, evmErr := vm.Call(evmCache, eventSink, callerAddr, contractAddr, input, input, 0, &gas)
+		callParams := engine.CallParams{
+			Origin: callerAddr,
+			Caller: callerAddr,
+			Callee: contractAddr,
+			Input:  input,
+		}
+
+		rtCode, evmErr := vm.Execute(state, &Blockchain{}, eventSink, callParams, input)
 		if evmErr != nil {
 			return shim.Error(fmt.Sprintf("failed to deploy code: %s", evmErr))
 		}
@@ -151,7 +160,14 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 			return shim.Error(fmt.Sprintf("failed to retrieve contract code: %s", evmErr))
 		}
 
-		output, evmErr := vm.Call(evmCache, eventSink, callerAddr, calleeAddr, calleeCode, input, 0, &gas)
+		callParams := engine.CallParams{
+			Origin: callerAddr,
+			Caller: callerAddr,
+			Callee: calleeAddr,
+			Input:  input,
+		}
+
+		output, evmErr := vm.Call(evmCache, &Blockchain{}, eventSink, calleeCode)
 		if evmErr != nil {
 			return shim.Error(fmt.Sprintf("failed to execute contract: %s", evmErr))
 		}

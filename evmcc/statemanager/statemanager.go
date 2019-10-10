@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/hyperledger/burrow/acm"
+	"github.com/hyperledger/burrow/acm/acmstate"
 	"github.com/hyperledger/burrow/binary"
 	"github.com/hyperledger/burrow/crypto"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -22,6 +23,8 @@ type StateManager interface {
 	UpdateAccount(updatedAccount *acm.Account) error
 	RemoveAccount(address crypto.Address) error
 	SetStorage(address crypto.Address, key, value binary.Word256) error
+	GetMetadata(metahash acmstate.MetadataHash) (string, error)
+	SetMetadata(metahash acmstate.MetadataHash, metadata string) error
 }
 
 type stateManager struct {
@@ -48,7 +51,12 @@ func (s *stateManager) GetAccount(address crypto.Address) (*acm.Account, error) 
 		return nil, nil
 	}
 
-	return acm.Decode(acctBytes)
+	var account *acm.Account
+	err = account.Unmarshal(acctBytes)
+	if err != nil {
+		return nil, err
+	}
+	return account, nil
 }
 
 func (s *stateManager) GetStorage(address crypto.Address, key binary.Word256) (binary.Word256, error) {
@@ -67,7 +75,7 @@ func (s *stateManager) GetStorage(address crypto.Address, key binary.Word256) (b
 }
 
 func (s *stateManager) UpdateAccount(updatedAccount *acm.Account) error {
-	encodedAcct, err := updatedAccount.Encode()
+	encodedAcct, err := updatedAccount.Marshal()
 	if err != nil {
 		return err
 	}
@@ -91,4 +99,11 @@ func (s *stateManager) SetStorage(address crypto.Address, key, value binary.Word
 	}
 
 	return err
+}
+
+func (s *stateManager) GetMetadata(metahash acmstate.MetadataHash) (string, error) {
+	return "", nil
+}
+func (s *stateManager) SetMetadata(metahash acmstate.MetadataHash, metadata string) error {
+	return nil
 }
