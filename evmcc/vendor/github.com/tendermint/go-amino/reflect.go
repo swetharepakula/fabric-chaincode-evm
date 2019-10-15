@@ -106,23 +106,22 @@ func isDefaultValue(rv reflect.Value) (erv reflect.Value, isDefaultValue bool) {
 	rv, _, isNilPtr := derefPointers(rv)
 	if isNilPtr {
 		return rv, true
-	} else {
-		switch rv.Kind() {
-		case reflect.Bool:
-			return rv, rv.Bool() == false
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			return rv, rv.Int() == 0
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			return rv, rv.Uint() == 0
-		case reflect.String:
-			return rv, rv.Len() == 0
-		case reflect.Chan, reflect.Map, reflect.Slice:
-			return rv, rv.IsNil() || rv.Len() == 0
-		case reflect.Func, reflect.Interface:
-			return rv, rv.IsNil()
-		default:
-			return rv, false
-		}
+	}
+	switch rv.Kind() {
+	case reflect.Bool:
+		return rv, false
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return rv, rv.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return rv, rv.Uint() == 0
+	case reflect.String:
+		return rv, rv.Len() == 0
+	case reflect.Chan, reflect.Map, reflect.Slice:
+		return rv, rv.IsNil() || rv.Len() == 0
+	case reflect.Func, reflect.Interface:
+		return rv, rv.IsNil()
+	default:
+		return rv, false
 	}
 }
 
@@ -132,7 +131,7 @@ func defaultValue(rt reflect.Type) (rv reflect.Value) {
 	switch rt.Kind() {
 	case reflect.Ptr:
 		// Dereference all the way and see if it's a time type.
-		rt_:= rt.Elem()
+		rt_ := rt.Elem()
 		for rt_.Kind() == reflect.Ptr {
 			rt_ = rt_.Elem()
 		}
