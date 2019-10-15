@@ -22,9 +22,14 @@ gotools-clean:
 	-@rm -rf $(BUILD_DIR)/gotools
 
 # Special override for ginkgo since we want to use the version vendored with the project
+gotool.dep: DEP_VERSION ?= "v1.10.2"
 gotool.ginkgo:
+	@GOPATH=$(abspath $(GOTOOLS_GOPATH)) go get -d -u github.com/onsi/ginkgo/ginkgo
+	@git -C $(abspath $(GOTOOLS_GOPATH))/src/github.com/onsi/ginkgo/ginkgo checkout -q $(GINKGO_VERSION)
 	@echo "Building github.com/onsi/ginkgo/ginkgo -> ginkgo"
-	@go install ./vendor/github.com/onsi/ginkgo/ginkgo
+	@GOPATH=$(abspath $(GOTOOLS_GOPATH)) GOBIN=$(abspath $(GOTOOLS_BINDIR)) go install -ldflags="-X main.version=$(GINKGO_VERSION) -X main.buildDate=$$(date '+%Y-%m-%d')" github.com/onsi/ginkgo/ginkgo
+# reset to a branch, so that the next time this target is run, go get starts on a branch, as it must
+	@git -C $(abspath $(GOTOOLS_GOPATH))/src/github.com/golang/dep checkout -q master
 
 # Lock to a versioned dep
 gotool.dep: DEP_VERSION ?= "v0.5.4"
