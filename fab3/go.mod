@@ -4,6 +4,8 @@ replace github.com/perlin-network/life => github.com/silasdavis/life v0.0.0-2019
 
 replace github.com/hyperledger/fabric-chaincode-evm/evmcc => ../evmcc
 
+replace github.com/prometheus/client_golang v1.2.1 => github.com/prometheus/client_golang v0.8.0
+
 require (
 	github.com/cloudflare/cfssl v0.0.0-20180223231731-4e2dcbde5004 // indirect from fabric-go-sdk
 	github.com/gogo/protobuf v1.3.1
@@ -16,14 +18,14 @@ require (
 	github.com/hyperledger/fabric-chaincode-evm/evmcc v0.0.0
 	github.com/hyperledger/fabric-lib-go v1.0.0 // indirect
 	github.com/hyperledger/fabric-sdk-go v1.0.0-alpha5
-	github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6 // indirect
 	github.com/onsi/ginkgo v1.10.2
 	github.com/onsi/gomega v1.7.0
 	github.com/pkg/errors v0.8.1
-	github.com/prometheus/client_golang v1.2.0 //indirect from fabric go sdk
+	github.com/prometheus/client_golang v1.2.1 // fabric-go-sdk requires v0.8.0 and burrow requires v1.2.1
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.4.0
 	github.com/zmap/zlint v1.0.2 // indirect
 	go.uber.org/zap v1.10.0
-	golang.org/x/arch v0.0.0-20190927153633-4e8777c89be4 // indirect
 )
+
+replace github.com/go-kit/kit => github.com/go-kit/kit v0.8.0
