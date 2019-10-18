@@ -206,6 +206,8 @@ github.com/hyperledger/burrow v0.29.0 h1:oPkU+ZUJS3MGDu9S2J1vDFYeSPQPZOzN+Yx/tD/
 github.com/hyperledger/burrow v0.29.0/go.mod h1:lOA0JRpvMfjeHF7Wnm0X15A2HxQUjYrgZpTxRwOsYtI=
 github.com/hyperledger/burrow v0.29.1 h1:RSQqmEetb43di6FZlsxX/B0N/OGVaGWUf5xZu2q6wBw=
 github.com/hyperledger/burrow v0.29.1/go.mod h1:lOA0JRpvMfjeHF7Wnm0X15A2HxQUjYrgZpTxRwOsYtI=
+github.com/hyperledger/fabric v1.4.0 h1:AiOUXysOwh4BmSLZaNzw6ZocZl0uByekPcc+g3PiXH4=
+github.com/hyperledger/fabric v1.4.0/go.mod h1:tGFAOCT696D3rG0Vofd2dyWYLySHlh0aQjf7Q1HAju0=
 github.com/hyperledger/fabric v1.4.3 h1:6MmYhcDbxhd0TvpvHLR3c5m3fVjaX97690H8TRjpJNA=
 github.com/hyperledger/fabric v1.4.3/go.mod h1:tGFAOCT696D3rG0Vofd2dyWYLySHlh0aQjf7Q1HAju0=
 github.com/hyperledger/fabric-amcl v0.0.0-20190902191507-f66264322317 h1:7BDH7PcKavbYYdH6Oo1rOAlftTbC4FuzRsvqAldw12w=

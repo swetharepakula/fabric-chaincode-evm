@@ -10,7 +10,6 @@ import (
 	"io"
 	"time"
 
-	zaplogfmt "github.com/sykesm/zap-logfmt"
 	"go.uber.org/zap/buffer"
 	"go.uber.org/zap/zapcore"
 )
@@ -30,7 +29,7 @@ type Formatter interface {
 
 func NewFormatEncoder(formatters ...Formatter) *FormatEncoder {
 	return &FormatEncoder{
-		Encoder: zaplogfmt.NewEncoder(zapcore.EncoderConfig{
+		Encoder: zapcore.NewConsoleEncoder(zapcore.EncoderConfig{
 			MessageKey:     "", // disable
 			LevelKey:       "", // disable
 			TimeKey:        "", // disable

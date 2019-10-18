@@ -60,7 +60,6 @@ func NewGRPCClient(config ClientConfig) (*GRPCClient, error) {
 	// Unless asynchronous connect is set, make connection establishment blocking.
 	if !config.AsyncConnect {
 		client.dialOpts = append(client.dialOpts, grpc.WithBlock())
-		client.dialOpts = append(client.dialOpts, grpc.FailOnNonTempDialError(true))
 	}
 	client.timeout = config.Timeout
 	// set send/recv message size to package defaults
@@ -106,13 +105,6 @@ func (client *GRPCClient) parseSecureOptions(opts *SecureOptions) error {
 				"are required when using mutual TLS")
 		}
 	}
-
-	if opts.TimeShift > 0 {
-		client.tlsConfig.Time = func() time.Time {
-			return time.Now().Add((-1) * opts.TimeShift)
-		}
-	}
-
 	return nil
 }
 

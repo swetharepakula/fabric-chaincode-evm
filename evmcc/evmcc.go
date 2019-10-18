@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/hyperledger/burrow/acm"
 	"github.com/hyperledger/burrow/crypto"
@@ -39,6 +40,22 @@ var ContractPerms = permission.AccountPermissions{
 
 var logger = flogging.MustGetLogger("evmcc")
 var evmLogger = logging.NewNoopLogger()
+
+// Blockchain interface required to run EVM
+// Currently not supported as current BlockHeight and BlockTime can lead to undeterministic output
+type blockchain struct{}
+
+func (*blockchain) LastBlockHeight() uint64 {
+	panic("Block Height shouldn't be called")
+}
+
+func (*blockchain) LastBlockTime() time.Time {
+	panic("Block Time shouldn't be called")
+}
+
+func (*blockchain) BlockHash(height uint64) ([]byte, error) {
+	panic("Block Hash shouldn't be called")
+}
 
 type EvmChaincode struct{}
 
@@ -123,7 +140,7 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 			Gas:    &gas,
 		}
 
-		rtCode, evmErr := vm.Execute(state, &Blockchain{}, eventSink, callParams, input)
+		rtCode, evmErr := vm.Execute(state, &blockchain{}, eventSink, callParams, input)
 		if evmErr != nil {
 			return shim.Error(fmt.Sprintf("failed to deploy code: %s", evmErr))
 		}
@@ -166,7 +183,7 @@ func (evmcc *EvmChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 			Gas:    &gas,
 		}
 
-		output, err := vm.Execute(state, &Blockchain{}, eventSink, callParams, calleeAcct.EVMCode)
+		output, err := vm.Execute(state, &blockchain{}, eventSink, callParams, calleeAcct.EVMCode)
 		if err != nil {
 			return shim.Error(fmt.Sprintf("failed to execute contract: %s", err))
 		}

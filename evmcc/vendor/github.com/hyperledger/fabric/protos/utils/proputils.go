@@ -227,7 +227,9 @@ func GetChaincodeProposalPayload(bytes []byte) (*peer.ChaincodeProposalPayload, 
 
 // GetSignatureHeader Get SignatureHeader from bytes
 func GetSignatureHeader(bytes []byte) (*common.SignatureHeader, error) {
-	return UnmarshalSignatureHeader(bytes)
+	sh := &common.SignatureHeader{}
+	err := proto.Unmarshal(bytes, sh)
+	return sh, errors.Wrap(err, "error unmarshaling SignatureHeader")
 }
 
 // CreateChaincodeProposal creates a proposal from given input.

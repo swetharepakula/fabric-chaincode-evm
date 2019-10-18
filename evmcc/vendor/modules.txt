@@ -126,7 +126,7 @@ github.com/hyperledger/burrow/encoding/rlp
 github.com/hyperledger/burrow/event/pubsub
 github.com/hyperledger/burrow/keys
 github.com/hyperledger/burrow/execution/registry
-# github.com/hyperledger/fabric v1.4.3
+# github.com/hyperledger/fabric v1.4.0
 github.com/hyperledger/fabric/common/flogging
 github.com/hyperledger/fabric/core/chaincode/shim
 github.com/hyperledger/fabric/protos/peer
@@ -146,7 +146,6 @@ github.com/hyperledger/fabric/bccsp/pkcs11
 github.com/hyperledger/fabric/bccsp/sw
 github.com/hyperledger/fabric/common/metadata
 github.com/hyperledger/fabric/common/metrics
-github.com/hyperledger/fabric/common/semaphore
 github.com/hyperledger/fabric/core/config
 github.com/hyperledger/fabric/common/crypto
 github.com/hyperledger/fabric/core/chaincode/platforms
@@ -250,8 +249,6 @@ github.com/spf13/jwalterweatherman
 github.com/spf13/pflag
 # github.com/spf13/viper v1.4.0
 github.com/spf13/viper
-# github.com/sykesm/zap-logfmt v0.0.2
-github.com/sykesm/zap-logfmt
 # github.com/tendermint/go-amino v0.15.1
 github.com/tendermint/go-amino
 # github.com/tendermint/tendermint v0.32.6

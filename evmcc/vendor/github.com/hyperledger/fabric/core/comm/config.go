@@ -77,20 +77,6 @@ type ClientConfig struct {
 	AsyncConnect bool
 }
 
-// Clone clones this ClientConfig
-func (cc ClientConfig) Clone() ClientConfig {
-	shallowClone := cc
-	if shallowClone.SecOpts != nil {
-		secOptsClone := *cc.SecOpts
-		shallowClone.SecOpts = &secOptsClone
-	}
-	if shallowClone.KaOpts != nil {
-		kaOptsClone := *cc.KaOpts
-		shallowClone.KaOpts = &kaOptsClone
-	}
-	return shallowClone
-}
-
 // SecureOptions defines the security parameters (e.g. TLS) for a
 // GRPCServer or GRPCClient instance
 type SecureOptions struct {
@@ -114,8 +100,6 @@ type SecureOptions struct {
 	RequireClientCert bool
 	// CipherSuites is a list of supported cipher suites for TLS
 	CipherSuites []uint16
-	// TimeShift makes TLS handshakes time sampling shift to the past by a given duration
-	TimeShift time.Duration
 }
 
 // KeepaliveOptions is used to set the gRPC keepalive settings for both

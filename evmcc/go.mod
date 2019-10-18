@@ -31,7 +31,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/howeyc/gopass v0.0.0-20190910152052-7cb4b85ec19c // indirect
 	github.com/hyperledger/burrow v0.29.1
-	github.com/hyperledger/fabric v1.4.3
+	github.com/hyperledger/fabric v1.4.0
 	github.com/hyperledger/fabric-amcl v0.0.0-20190902191507-f66264322317 // indirect
 	github.com/imdario/mergo v0.3.8 // indirect
 	github.com/jessevdk/go-flags v1.4.0 // indirect
