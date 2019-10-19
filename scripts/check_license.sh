@@ -30,6 +30,8 @@ function filterExcludedFiles {
 		| grep -v "^Gopkg\.lock$" \
 		| grep -v "\.md$" \
 		| grep -v "\.pb\.go$" \
+		| grep -v "go.mod" \
+		| grep -v "go.sum" \
 		| sort -u`
 
   CHECK=$(filterGeneratedFiles "$CHECK")
